@@ -1,0 +1,15 @@
+{
+    "peripheralmanager.query" : [
+        "com.webos.service.peripheralmanager/gpio/list",
+	"com.webos.service.peripheralmanager/getPollingFd"
+    ],
+    "peripheralmanager.management": [
+        "com.webos.service.peripheralmanager/gpio/open",
+        "com.webos.service.peripheralmanager/gpio/release",
+        "com.webos.service.peripheralmanager/gpio/setDirection"
+	],
+	"peripheralmanager.operation": [
+        "com.webos.service.peripheralmanager/gpio/setValue",
+        "com.webos.service.peripheralmanager/gpio/getValue"
+    ]
+}

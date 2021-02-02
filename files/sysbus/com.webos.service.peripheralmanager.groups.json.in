@@ -1,0 +1,7 @@
+{
+	"allowedNames" : ["com.webos.service.peripheralmanager"],
+	"peripheralmanager.query" : ["dev"],
+	"peripheralmanager.operation" : ["oem"],
+	"peripheralmanager.management" : ["oem"]
+
+}
