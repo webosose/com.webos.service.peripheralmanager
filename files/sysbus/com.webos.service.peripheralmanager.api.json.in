@@ -1,15 +1,24 @@
 {
-    "peripheralmanager.query" : [
-        "com.webos.service.peripheralmanager/gpio/list",
-	"com.webos.service.peripheralmanager/getPollingFd"
-    ],
-    "peripheralmanager.management": [
-        "com.webos.service.peripheralmanager/gpio/open",
-        "com.webos.service.peripheralmanager/gpio/release",
-        "com.webos.service.peripheralmanager/gpio/setDirection"
-	],
-	"peripheralmanager.operation": [
-        "com.webos.service.peripheralmanager/gpio/setValue",
-        "com.webos.service.peripheralmanager/gpio/getValue"
-    ]
+        "peripheralmanager.query": [
+                "com.webos.service.peripheralmanager/gpio/list",
+                "com.webos.service.peripheralmanager/uart/list",
+                "com.webos.service.peripheralmanager/uart/getBaudrate",
+                "com.webos.service.peripheralmanager/gpio/getDirection"
+        ],
+        "peripheralmanager.gpio.operation": [
+                "com.webos.service.peripheralmanager/gpio/setValue",
+                "com.webos.service.peripheralmanager/gpio/getValue",
+                "com.webos.service.peripheralmanager/gpio/open",
+                "com.webos.service.peripheralmanager/gpio/close",
+                "com.webos.service.peripheralmanager/gpio/getPollingFd",
+                "com.webos.service.peripheralmanager/gpio/setDirection"
+        ],
+        "peripheralmanager.uart.operation": [
+                "com.webos.service.peripheralmanager/uart/write",
+                "com.webos.service.peripheralmanager/uart/read",
+                "com.webos.service.peripheralmanager/uart/open",
+                "com.webos.service.peripheralmanager/uart/close",
+                "com.webos.service.peripheralmanager/uart/getPollingFd",
+                "com.webos.service.peripheralmanager/uart/setBaudrate"
+        ]
 }
