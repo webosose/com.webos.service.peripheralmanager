@@ -51,6 +51,8 @@ class PeripheralManagerClient {
   bool  GetGpioValue(const std::string& name, bool* value) ;
   Status GetGpioPollingFd(const std::string& name,
                           void* fd) ;
+  bool  getDirection(const std::string& name,
+                          int direction) ;
 
 //Uart functions
   Status ListUartDevices(std::vector<std::string>* devices);
@@ -70,6 +72,8 @@ class PeripheralManagerClient {
                         std::vector<uint8_t>* data,
                         int size,
                         int* bytes_read);
+  bool getBaudrate(const std::string& name,
+                               int32_t baudrate);
 
 
  private:

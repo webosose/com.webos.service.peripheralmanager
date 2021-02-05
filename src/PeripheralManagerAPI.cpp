@@ -605,7 +605,52 @@ bool PeripheralManagerService::UartDeviceRead(LSMessage &ls_message) {
     }
     return true;
 }
+bool PeripheralManagerService::getBaudrate(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    pbnjson::JValue baudrate_array = pbnjson::JArray();
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        subscription = parsed["subscribe"].asBool();
+        response_json =
+                pbnjson::JObject{{"returnValue", true},
+            {"baudrate", baudrate_array},
+            {"subscribed", subscription}};
 
+        request.respond(response_json.stringify().c_str());
+
+    }
+    return true;
+}
+bool PeripheralManagerService::getDirection(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    pbnjson::JValue direction_array = pbnjson::JArray();
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        subscription = parsed["subscribe"].asBool();
+        response_json =
+                pbnjson::JObject{{"returnValue", true},
+            {"direction", direction_array},
+            {"subscribed", subscription}};
+
+        request.respond(response_json.stringify().c_str());
+
+    }
+    return true;
+}
 
 // Private Methods
 void PeripheralManagerService::registerMethodsToLsHub() {
@@ -623,6 +668,8 @@ void PeripheralManagerService::registerMethodsToLsHub() {
              {"getValue", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::GetGpioValue>,
              static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
 	     {"getPollingFd", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::GetGpioPollingFd>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+	     {"getDirection", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::getDirection>,
              static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
 
 {nullptr, nullptr}};
@@ -646,6 +693,10 @@ void PeripheralManagerService::registerMethodsToLsHub() {
              {"write", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::UartDeviceWrite>,
              static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
              {"read", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::UartDeviceRead>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+	     {"getPollingFd", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::GetGpioPollingFd>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+	     {"getBaudrate", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::getBaudrate>,
              static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
 
 {nullptr, nullptr}};

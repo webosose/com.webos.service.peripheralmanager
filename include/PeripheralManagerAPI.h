@@ -53,6 +53,8 @@ public:
     bool SetUartDeviceBaudrate(LSMessage &ls_message);
     bool UartDeviceWrite(LSMessage &ls_message);
     bool UartDeviceRead(LSMessage &ls_message);
+    bool getBaudrate(LSMessage &ls_message);
+    bool getDirection(LSMessage &ls_message);
 
     void subscribeLoraReceive();
     static bool receiveCallback(LSHandle *sh, LSMessage *reply, void *ctx);
