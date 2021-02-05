@@ -47,6 +47,12 @@ public:
     bool SetGpioValue(LSMessage &ls_message);
     bool GetGpioValue(LSMessage &ls_message);
     bool GetGpioPollingFd(LSMessage &ls_message);
+    bool ListUartDevices(LSMessage &ls_message);
+    bool OpenUartDevice(LSMessage &ls_message);
+    bool ReleaseUartDevice(LSMessage &ls_message);
+    bool SetUartDeviceBaudrate(LSMessage &ls_message);
+    bool UartDeviceWrite(LSMessage &ls_message);
+    bool UartDeviceRead(LSMessage &ls_message);
 
     void subscribeLoraReceive();
     static bool receiveCallback(LSHandle *sh, LSMessage *reply, void *ctx);

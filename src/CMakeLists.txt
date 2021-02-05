@@ -20,6 +20,9 @@ add_executable(${CMAKE_PROJECT_NAME} Main.cpp
                 PeripheralManagerClient.cpp
                 PeripheralManagerException.cpp
                 PinmuxManager.cpp
+                UartManager.cpp
+                UartDriverSysfs.cpp
+                CharDevice.cpp
                 )
 
 target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC ${GLIB2_CFLAGS_OTHER})

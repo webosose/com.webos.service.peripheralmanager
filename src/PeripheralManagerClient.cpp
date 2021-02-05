@@ -117,8 +117,93 @@ Status PeripheralManagerClient::GetGpioPollingFd(
     }
 
     if (gpios_.find(name)->second->GetPollingFd(fd)) {
-        //    return Status::ok();
     }
 
-    //  return Status::fromServiceSpecificError(EREMOTEIO);
+}
+Status PeripheralManagerClient::ListUartDevices(
+    std::vector<std::string>* devices) {
+  *devices = UartManager::GetManager()->GetDevicesList();
+}
+
+Status PeripheralManagerClient::OpenUartDevice(const std::string& name) {
+    AppLogError() << __func__ << ":" << __LINE__ ;
+  if (!UartManager::GetManager()->HasUartDevice(name)) {
+      AppLogError() << __func__ << ":" << __LINE__ ;
+      throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kENODEV);
+  }
+
+  auto uart_device = UartManager::GetManager()->OpenUartDevice(name);
+  if (!uart_device) {
+      AppLogError() << __func__ << ":" << __LINE__ ;
+      AppLogError() << "Failed to open UART device " << name;
+      throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kEBUSY);
+  }
+  AppLogError() << __func__ << ":" << __LINE__ ;
+  uart_devices_.emplace(name, std::move(uart_device));
+}
+bool PeripheralManagerClient::ReleaseUartDevice(const std::string& name) {
+  return uart_devices_.erase(name) ? true
+                                   : throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kEPERM);
+}
+
+bool PeripheralManagerClient::SetUartDeviceBaudrate(const std::string& name,
+                                                      int32_t baudrate) {
+    AppLogError() << __func__ << ":" << __LINE__ ;
+  auto uart_device = uart_devices_.find(name);
+  if (uart_device == uart_devices_.end()) {
+      AppLogError() << __func__ << ":" << __LINE__ ;
+      throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kEPERM);
+  }
+
+  if (baudrate < 0) {
+      AppLogError() << __func__ << ":" << __LINE__ ;
+      throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kEINVAL);
+  }
+
+  int ret = uart_device->second->SetBaudrate(static_cast<uint32_t>(baudrate));
+
+  if (ret) {
+      AppLogError() << __func__ << ":" << __LINE__ ;
+      return false;
+  }
+  AppLogError() << __func__ << ":" << __LINE__ ;
+  return true;
+}
+
+bool PeripheralManagerClient::UartDeviceWrite(
+    const std::string& name,
+    const std::vector<uint8_t>& data,
+    int32_t* bytes_written) {
+  auto uart_device = uart_devices_.find(name);
+  if (uart_device == uart_devices_.end()) {
+      throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kEPERM);
+  }
+
+  int ret = uart_device->second->Write(
+      data, reinterpret_cast<uint32_t*>(bytes_written));
+
+  if (ret) {
+      return false;
+  }
+
+  return true;
+}
+
+bool PeripheralManagerClient::UartDeviceRead(const std::string& name,
+                                               std::vector<uint8_t>* data,
+                                               int size,
+                                               int* bytes_read) {
+  auto uart_device = uart_devices_.find(name);
+  if (uart_device == uart_devices_.end()) {
+      throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kEPERM);
+  }
+
+  int ret = uart_device->second->Read(
+      data, size, reinterpret_cast<uint32_t*>(bytes_read));
+
+  if (ret) {
+      return false;
+  }
+
+  return true;
 }

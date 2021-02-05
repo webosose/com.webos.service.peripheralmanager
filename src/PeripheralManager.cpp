@@ -17,6 +17,8 @@
 #include "GpioDriverSysfs.h"
 #include "GpioManager.h"
 #include "PeripheralManager.h"
+#include "UartDriverSysfs.h"
+#include "UartManager.h"
 
 
 PeripheralManager::PeripheralManager() {}
@@ -42,9 +44,18 @@ bool PeripheralManager::RegisterDrivers() {
     AppLogError() << "Failed to load driver: GpioDriverSysfs";
     return false;
   }
+  if (!UartManager::GetManager()->RegisterDriver(
+          std::unique_ptr<UartDriverInfoBase>(
+                  new UartDriverInfo<UartDriverSysfs, CharDeviceFactory*>(
+                          nullptr)))) {
+      AppLogError() << "Failed to load driver: UartDriverSysfs";
+      return false;
+  }
   return true;
 }
-
+static int SetUartPinMux(const char* name, const char* source) {
+  return UartManager::GetManager()->SetPinMux(name, source);
+}
 
 bool PeripheralManager::InitHal() {
 #if 0
