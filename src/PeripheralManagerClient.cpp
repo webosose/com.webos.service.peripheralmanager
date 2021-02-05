@@ -66,6 +66,11 @@ bool PeripheralManagerClient::OpenGpio(const std::string& name) {
 
 
 bool  PeripheralManagerClient::ReleaseGpio(const std::string& name) {
+    if (!GpioManager::GetGpioManager()->HasGpio(name)) {
+        throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kENODEV);
+
+        return false;
+    }
     gpios_.erase(name);
     return true;
 }
