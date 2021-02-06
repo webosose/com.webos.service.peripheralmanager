@@ -33,6 +33,7 @@ class GpioDriverSysfs : public GpioDriverInterface {
   bool SetValue(bool val) override;
   bool GetValue(bool* val) override;
   bool SetDirection(GpioDirection direction) override;
+  bool getDirection(std::string& direction) override;
   bool GetPollingFd(void * fd) override;
 
  private:
@@ -41,6 +42,8 @@ class GpioDriverSysfs : public GpioDriverInterface {
   bool ExportGpio(uint32_t index);
   bool WriteToFile(const std::string& file, const std::string& value);
   bool ReadFromFile(const std::string& file, std::string* value);
+  bool ReadFromFileDirection(const std::string& file, std::string* value);
+
 
   int fd_;
 

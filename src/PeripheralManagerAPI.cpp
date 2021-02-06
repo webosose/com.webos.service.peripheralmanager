@@ -815,8 +815,9 @@ bool PeripheralManagerService::getBaudrate(LSMessage &ls_message) {
 bool PeripheralManagerService::getDirection(LSMessage &ls_message) {
     LS::Message request(&ls_message);
     bool subscription = false;
+    bool ret;
+    std::string direction;
     pbnjson::JValue response_json;
-    pbnjson::JValue direction_array = pbnjson::JArray();
     pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
     if (parsed.isError()) {
         response_json =
@@ -825,11 +826,12 @@ bool PeripheralManagerService::getDirection(LSMessage &ls_message) {
         return false;
     } else {
         std::string pin = parsed["pin"].asString();
+        subscription = parsed["subscribe"].asBool();
         std::string temp;
         bool extra_property = false;
         for(auto ii:parsed)
         {
-            if(ii.first.asString() == "pin" )
+            if(ii.first.asString() == "pin")
             {
                 continue;
             }
@@ -845,14 +847,22 @@ bool PeripheralManagerService::getDirection(LSMessage &ls_message) {
             request.respond(response_json.stringify().c_str());
             return true;
         }else {
-        subscription = parsed["subscribe"].asBool();
-        response_json =
-                pbnjson::JObject{{"returnValue", true},
-            {"direction", direction_array},
-            {"subscribed", subscription}};
+            try {
+                ret = peripheral_manager_client->getDirection(pin, direction);
 
-        request.respond(response_json.stringify().c_str());
-    }
+                response_json =
+                        pbnjson::JObject{{"returnValue", true},
+                    {"direction", direction}};
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
     }
     return true;
 }

@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <string.h>
 #include "GpioDriverSysfs.h"
 
 namespace {
@@ -119,6 +120,19 @@ bool GpioDriverSysfs::SetDirection(GpioDirection direction) {
   }
   return false;
 }
+bool GpioDriverSysfs::getDirection(std::string& direction) {
+  std::string read_direction;
+  if (!ReadFromFileDirection(kDirection, &read_direction))
+      return false;
+
+  if (read_direction.size() < 0)
+    return false;
+
+  direction = read_direction;
+
+  return true;
+}
+
 bool GpioDriverSysfs::GetPollingFd(void * fd) {
   int f = openat(fd_, kValue, O_RDWR);
   if (f < 0)
@@ -161,6 +175,22 @@ bool GpioDriverSysfs::ReadFromFile(const std::string& file,
   if (bytes < 0)
     return false;
   value->assign(tmp_buf, bytes);
+
+  return true;
+}
+
+bool GpioDriverSysfs::ReadFromFileDirection(const std::string& file,
+                                   std::string* value) {
+  int fd = openat(fd_, file.c_str(), O_RDONLY);
+  if (fd < 0)
+    return false;
+  char tmp_buf[16] = "";
+  ssize_t bytes = read(fd, tmp_buf, sizeof(tmp_buf));
+  close(fd);
+  if (bytes < 0)
+    return false;
+  int size = strlen(tmp_buf);
+  value->assign(tmp_buf, size-1);
   return true;
 }
 

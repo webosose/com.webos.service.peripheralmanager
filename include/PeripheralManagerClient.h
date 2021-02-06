@@ -52,7 +52,7 @@ class PeripheralManagerClient {
   Status GetGpioPollingFd(const std::string& name,
                           void* fd) ;
   bool  getDirection(const std::string& name,
-                          int direction) ;
+          std::string& direction) ;
 
 //Uart functions
   Status ListUartDevices(std::vector<std::string>* devices);

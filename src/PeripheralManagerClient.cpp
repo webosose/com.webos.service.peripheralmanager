@@ -88,6 +88,18 @@ bool PeripheralManagerClient::SetGpioDirection(const std::string& name,
     throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kEREMOTEIO);
     return false;
 }
+bool PeripheralManagerClient::getDirection(const std::string& name,
+        std::string& direction) {
+    if (!gpios_.count(name)) {
+        throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kEPERM);
+    }
+
+    if (gpios_.find(name)->second->getDirection(direction)) {
+        return true;
+    }
+    throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kEREMOTEIO);
+    return false;
+}
 
 bool PeripheralManagerClient::SetGpioValue(const std::string& name,
         bool value) {
