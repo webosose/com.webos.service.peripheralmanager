@@ -24,6 +24,7 @@
 #include <vector>
 #include <bits/stdc++.h>
 #include "GpioManager.h"
+#include "UartManager.h"
 
 
 using namespace std;
@@ -50,10 +51,34 @@ class PeripheralManagerClient {
   bool  GetGpioValue(const std::string& name, bool* value) ;
   Status GetGpioPollingFd(const std::string& name,
                           void* fd) ;
+  bool  getDirection(const std::string& name,
+          std::string& direction) ;
+
+//Uart functions
+  Status ListUartDevices(std::vector<std::string>* devices);
+
+  Status OpenUartDevice(const std::string& name);
+
+  bool ReleaseUartDevice(const std::string& name);
+
+  bool SetUartDeviceBaudrate(const std::string& name,
+                               int32_t baudrate);
+
+  bool UartDeviceWrite(const std::string& name,
+                         const std::vector<uint8_t>& data,
+                         int* bytes_written);
+
+  bool UartDeviceRead(const std::string& name,
+                        std::vector<uint8_t>* data,
+                        int size,
+                        int* bytes_read);
+  bool getBaudrate(const std::string& name,
+                               int32_t baudrate);
 
 
  private:
   std::map<std::string, std::unique_ptr<GpioPin>> gpios_;
+  std::map<std::string, std::unique_ptr<UartDevice>> uart_devices_;
 };
 
 class test {

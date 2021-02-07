@@ -37,6 +37,7 @@ class GpioDriverInterface {
   virtual bool GetValue(bool* val) = 0;
   virtual bool SetDirection(GpioDirection direction) = 0;
   virtual bool GetPollingFd(void * fd) = 0;
+  virtual bool getDirection(std::string& direction) =0;
 };
 
 // The following is driver boilerplate.

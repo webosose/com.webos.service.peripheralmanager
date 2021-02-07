@@ -244,8 +244,13 @@ bool PeripheralManagerService::SetGpioDirection(LSMessage &ls_message) {
         }
         else {
             if(dir == "in") direction = 0;
-            if(dir == "outHigh") direction = 1;
-            if(dir == "outLow") direction = 2;
+            else if(dir == "outHigh") direction = 1;
+            else if(dir == "outLow") direction = 2;
+            else {
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", dir+ " value not allowed"}};
+                request.respond(response_json.stringify().c_str());
+                return true;
+            }
             try {
                 ret = peripheral_manager_client->SetGpioDirection(pin, direction);
                 response_json =
@@ -299,6 +304,11 @@ bool PeripheralManagerService::SetGpioValue(LSMessage &ls_message) {
         }else {
             if(val == "high") value = true;
             else if(val == "low") value = false;
+            else {
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", val+ " value not allowed"}};
+                request.respond(response_json.stringify().c_str());
+                return true;
+            }
             try {
                 ret = peripheral_manager_client->SetGpioValue(pin, value);
                 response_json =
@@ -383,13 +393,476 @@ bool PeripheralManagerService::GetGpioPollingFd(LSMessage &ls_message) {
                 pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
         request.respond(response_json.stringify().c_str());
         return false;
+    }
+    else {
+        std::string pin = parsed["id"].asString();
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "id")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ " property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        else {
+            subscription = parsed["subscribe"].asBool();
+            response_json =
+                    pbnjson::JObject{{"returnValue", true}};
+
+            request.respond(response_json.stringify().c_str());
+
+        }
+    }
+    return true;
+}
+bool PeripheralManagerService::ListUartDevices(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
     } else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "subscribe")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+" property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }else {
+        subscription = parsed["subscribe"].asBool();
+        std::vector<std::string> devices;
+        try {
+            peripheral_manager_client->ListUartDevices(&devices);
+            pbnjson::JValue device_list = pbnjson::JArray();
+            for (std::string device : devices) {
+                device_list << device;
+            }
+            response_json =
+                    pbnjson::JObject{{"returnValue", true},
+                {"subscribed", subscription},
+                {"uartList", device_list}};
+        }
+        catch (LS::Error &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+        } catch (PeripheralManagerException &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+        } catch (...) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+        }
+        request.respond(response_json.stringify().c_str());
+	}
+
+    }
+    return true;
+}
+
+bool PeripheralManagerService::OpenUartDevice(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        std::string deviceName = parsed["deviceName"].asString();
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "deviceName")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ "property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }else {
+        subscription = parsed["subscribe"].asBool();
+        const std::string deviceName = parsed["deviceName"].asString();
+        try {
+            peripheral_manager_client->OpenUartDevice(deviceName);
+            response_json =
+                    pbnjson::JObject{{"returnValue", true}};
+        }
+        catch (LS::Error &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+        } catch (PeripheralManagerException &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+        } catch (...) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+        }
+        request.respond(response_json.stringify().c_str());
+	}
+    }
+    return true;
+}
+
+
+bool PeripheralManagerService::ReleaseUartDevice(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    }else {
+        std::string deviceName = parsed["deviceName"].asString();
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "deviceName")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ "property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        } else {
+        subscription = parsed["subscribe"].asBool();
+        const std::string deviceName = parsed["deviceName"].asString();
+        try {
+            peripheral_manager_client->ReleaseUartDevice(deviceName);
+
+            response_json =
+                    pbnjson::JObject{{"returnValue", true}};
+        }
+        catch (LS::Error &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+        } catch (PeripheralManagerException &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+        } catch (...) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+        }
+        request.respond(response_json.stringify().c_str());
+	}
+    }
+    return true;
+}
+
+bool PeripheralManagerService::SetUartDeviceBaudrate(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    bool ret = false;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    }else {
+        //int32_t baudrate = parsed["baudrate"].asNumber<int>();
+        std::string deviceName = parsed["deviceName"].asString();
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "baudrate" || ii.first.asString() == "deviceName")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ "property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        } else {
+        subscription = parsed["subscribe"].asBool();
+        const std::string deviceName = parsed["deviceName"].asString();
+        int32_t baudrate = parsed["baudrate"].asNumber<int>();
+        try {
+            ret = peripheral_manager_client->SetUartDeviceBaudrate(deviceName, baudrate);
+            response_json =
+                    pbnjson::JObject{{"returnValue", ret}};
+        }
+        catch (LS::Error &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+        } catch (PeripheralManagerException &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+        } catch (...) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+        }
+        request.respond(response_json.stringify().c_str());
+	}
+    }
+    return true;
+}
+
+bool PeripheralManagerService::UartDeviceWrite(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    bool ret = false;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    }else {
+        //std::string data = parsed["data"].asBool();
+        std::string deviceName = parsed["deviceName"].asString();
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "data" || ii.first.asString() == "deviceName")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ "property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        } else {
+        subscription = parsed["subscribe"].asBool();
+        const std::string deviceName = parsed["deviceName"].asString();
+        const std::vector<uint8_t> data {1};
+        int bytes_written = 0;
+        try {
+            ret = peripheral_manager_client->UartDeviceWrite(deviceName, data, &bytes_written);
+            response_json =
+                    pbnjson::JObject{{"returnValue", ret},
+                {"bytes_written", bytes_written}};
+        }
+        catch (LS::Error &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+        } catch (PeripheralManagerException &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+        } catch (...) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+        }
+        request.respond(response_json.stringify().c_str());
+	}
+    }
+    return true;
+}
+
+bool PeripheralManagerService::UartDeviceRead(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    bool ret = false;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    }else {
+	//int size = parsed["size"].asNumber<int>();
+        std::string deviceName = parsed["deviceName"].asString();
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "size" || ii.first.asString() == "deviceName")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ "property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        } else {
+        subscription = parsed["subscribe"].asBool();
+        const std::string deviceName = parsed["deviceName"].asString();
+        int size = parsed["size"].asNumber<int>();
+        std::vector<uint8_t> data;
+        data.resize(9);
+        int bytes_read = 0;
+        try {
+            ret = peripheral_manager_client->UartDeviceRead(deviceName, &data, data.size(), &bytes_read);
+            pbnjson::JValue data_array = pbnjson::JArray();
+//            bytes_read = (data.size() > bytes_read) ? bytes_read :  data.size();
+            for(int i = 0; i < bytes_read; i++) {
+                data_array << data[i];
+
+            }
+            response_json =
+                    pbnjson::JObject{{"returnValue", ret},
+                {"bytes_read", bytes_read},
+                {"data", data_array}};
+        }
+        catch (LS::Error &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+        } catch (PeripheralManagerException &err) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+        } catch (...) {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+        }
+        request.respond(response_json.stringify().c_str());
+	}
+    }
+    return true;
+}
+bool PeripheralManagerService::getBaudrate(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    pbnjson::JValue baudrate_array = pbnjson::JArray();
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    }else {
+        std::string deviceName = parsed["deviceName"].asString();
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "deviceName" )
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ "property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        } else {
         subscription = parsed["subscribe"].asBool();
         response_json =
-                pbnjson::JObject{{"returnValue", true}};
+                pbnjson::JObject{{"returnValue", true},
+            {"baudrate", baudrate_array},
+            {"subscribed", subscription}};
 
         request.respond(response_json.stringify().c_str());
+	}
+    }
+    return true;
+}
+bool PeripheralManagerService::getDirection(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    bool ret;
+    std::string direction;
+    pbnjson::JValue response_json;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        std::string pin = parsed["pin"].asString();
+        subscription = parsed["subscribe"].asBool();
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "pin")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ "property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }else {
+            try {
+                ret = peripheral_manager_client->getDirection(pin, direction);
 
+                response_json =
+                        pbnjson::JObject{{"returnValue", true},
+                    {"direction", direction}};
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
     }
     return true;
 }
@@ -412,6 +885,8 @@ void PeripheralManagerService::registerMethodsToLsHub() {
              static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
 	     {"getPollingFd", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::GetGpioPollingFd>,
              static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+	     {"getDirection", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::getDirection>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
 
 {nullptr, nullptr}};
     luna_handle->registerCategory("/gpio", gpio, nullptr, nullptr);
@@ -422,4 +897,25 @@ void PeripheralManagerService::registerMethodsToLsHub() {
              {nullptr, nullptr}};
     luna_handle->registerCategory("/", root_table, nullptr, nullptr);
     luna_handle->setCategoryData("/", this);
+    static const LSMethod uart[] = {
+             {"list", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::ListUartDevices>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+             {"open", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::OpenUartDevice>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+             {"close", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::ReleaseUartDevice>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+             {"setBaudrate", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::SetUartDeviceBaudrate>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+             {"write", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::UartDeviceWrite>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+             {"read", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::UartDeviceRead>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+	     {"getPollingFd", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::GetGpioPollingFd>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+	     {"getBaudrate", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::getBaudrate>,
+             static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+
+{nullptr, nullptr}};
+    luna_handle->registerCategory("/uart", uart, nullptr, nullptr);
+    luna_handle->setCategoryData("/uart", this);
 }

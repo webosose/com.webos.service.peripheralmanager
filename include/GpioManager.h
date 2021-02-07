@@ -55,6 +55,7 @@ class GpioPin {
     }
     return pin_->driver_->SetDirection(direction);
   }
+  bool getDirection(std::string&  direction) { return pin_->driver_->getDirection(direction);}
   bool GetPollingFd(void* fd) {
     return pin_->driver_->GetPollingFd(fd);
   }
