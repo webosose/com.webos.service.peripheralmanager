@@ -60,6 +60,8 @@ public:
     bool OpenI2cDevice(LSMessage &ls_message);
     bool ReleaseI2cDevice(LSMessage &ls_message);
     bool I2cRead(LSMessage &ls_message);
+    bool I2cReadRegByte(LSMessage &ls_message);
+    bool I2cReadRegWord(LSMessage &ls_message);
 
     void subscribeLoraReceive();
     static bool receiveCallback(LSHandle *sh, LSMessage *reply, void *ctx);
