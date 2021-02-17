@@ -47,6 +47,7 @@ public:
             const uint8_t* data,
             uint32_t size,
             uint32_t* bytes_written) = 0;
+    virtual int GetPollingFd(int* fd) = 0;
 };
 
 class I2cDriverInfoBase {

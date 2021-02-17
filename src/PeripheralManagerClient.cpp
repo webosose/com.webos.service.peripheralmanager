@@ -600,3 +600,17 @@ int32_t  PeripheralManagerClient::getBaudrate(const std::string& name,
 
     return ret;
 }
+int PeripheralManagerClient::Geti2cPollingFd(
+        const std::string& name,
+        int32_t address,
+        int* fd) {
+    if (!i2c_devices_.count({name, address})) {
+        throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kENODEV);
+    }
+    if (!I2cManager::GetI2cManager()->HasI2cDevBus(name)) {
+        throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kENODEV);
+    }
+    int ret = i2c_devices_.find({name, address})->second->GetPollingFd(fd);
+
+    return *fd;
+}

@@ -199,4 +199,8 @@ int32_t I2cDriverI2cDev::WriteRegBuffer(uint8_t reg,
 
     return 0;
 }
+int  I2cDriverI2cDev::GetPollingFd(int * fd) {
+    *fd = fd_;
+    return fd_;
+}
 

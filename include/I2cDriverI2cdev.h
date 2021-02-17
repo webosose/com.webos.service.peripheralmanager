@@ -48,6 +48,7 @@ public:
             const uint8_t* data,
             uint32_t size,
             uint32_t* bytes_written) override;
+    int  GetPollingFd(int * fd) override;
 
 private:
     int fd_;

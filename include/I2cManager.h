@@ -87,6 +87,9 @@ public:
         return bus_->driver_[address_]->WriteRegBuffer(
                 reg, data, size, bytes_written);
     }
+    int GetPollingFd(int* fd){
+        return bus_->driver_[address_]->GetPollingFd(fd);
+    }
 
 private:
     I2cDevBus* bus_;

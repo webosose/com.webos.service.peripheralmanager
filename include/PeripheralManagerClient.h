@@ -143,6 +143,9 @@ public:
             int32_t reg,
             const std::vector<uint8_t>& data,
             int32_t* bytes_written) ;
+    int Geti2cPollingFd(const std::string& name,
+            int32_t address,
+            int* fd);
 
     // Uart functions.
     Status ListUartDevices(std::vector<DevicesPinInfo>& devices);

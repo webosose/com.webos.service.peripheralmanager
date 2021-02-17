@@ -78,6 +78,7 @@ public:
     bool SpiDeviceSetBitJustification(LSMessage &ls_message);
     bool SpiDeviceSetBitsPerWord(LSMessage &ls_message);
     bool SpiDeviceSetDelay(LSMessage &ls_message);
+    bool Geti2cPollingFd(LSMessage &ls_message);
 
     void subscribeLoraReceive();
     static bool receiveCallback(LSHandle *sh, LSMessage *reply, void *ctx);
