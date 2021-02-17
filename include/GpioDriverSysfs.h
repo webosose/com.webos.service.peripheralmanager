@@ -21,30 +21,29 @@
 #include "Logger.h"
 
 class GpioDriverSysfs : public GpioDriverInterface {
- public:
-  explicit GpioDriverSysfs(void* arg);
-  ~GpioDriverSysfs();
+public:
+    explicit GpioDriverSysfs(void* arg);
+    ~GpioDriverSysfs();
 
-  static std::string Compat() { return "GPIOSYSFS"; }
+    static std::string Compat() { return "GPIOSYSFS"; }
 
-  bool Init(uint32_t index) override;
+    bool Init(uint32_t index) override;
 
-  // Gpio Driver interface.
-  bool SetValue(bool val) override;
-  bool GetValue(bool* val) override;
-  bool SetDirection(GpioDirection direction) override;
-  bool getDirection(std::string& direction) override;
-  bool GetPollingFd(void * fd) override;
+    // Gpio Driver interface.
+    bool SetValue(bool val) override;
+    bool GetValue(bool* val) override;
+    bool SetDirection(GpioDirection direction) override;
+    bool getDirection(std::string& direction) override;
+    int  GetPollingFd(int * fd) override;
 
- private:
-  bool Enable();
-  bool Disable();
-  bool ExportGpio(uint32_t index);
-  bool WriteToFile(const std::string& file, const std::string& value);
-  bool ReadFromFile(const std::string& file, std::string* value);
-  bool ReadFromFileDirection(const std::string& file, std::string* value);
+private:
+    bool Enable();
+    bool Disable();
+    bool ExportGpio(uint32_t index);
+    bool WriteToFile(const std::string& file, const std::string& value);
+    bool ReadFromFile(const std::string& file, std::string* value);
+    bool ReadFromFileDirection(const std::string& file, std::string* value);
 
-
-  int fd_;
+    int fd_;
 
 };

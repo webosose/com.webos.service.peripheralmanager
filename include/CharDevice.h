@@ -18,44 +18,42 @@
 
 #include <poll.h>
 #include <stdlib.h>
-
 #include <memory>
-
 
 // Used to wrap the interface to a char device file.
 // This can then be stubbed out and used in unittests.
 class CharDeviceInterface {
- public:
-  CharDeviceInterface(){};
-  virtual ~CharDeviceInterface(){};
+public:
+    CharDeviceInterface(){};
+    virtual ~CharDeviceInterface(){};
 
-  virtual int Open(const char* pathname, int flags) = 0;
-  virtual int Close(int fd) = 0;
-  virtual int Ioctl(int fd, int request, void* argp) = 0;
-  virtual ssize_t Read(int fd, void* buf, size_t count) = 0;
-  virtual ssize_t Write(int fd, const void* buf, size_t count) = 0;
-  virtual int Poll(struct pollfd* fds, nfds_t nfds, int timeout) = 0;
+    virtual int Open(const char* pathname, int flags) = 0;
+    virtual int Close(int fd) = 0;
+    virtual int Ioctl(int fd, int request, void* argp) = 0;
+    virtual ssize_t Read(int fd, void* buf, size_t count) = 0;
+    virtual ssize_t Write(int fd, const void* buf, size_t count) = 0;
+    virtual int Poll(struct pollfd* fds, nfds_t nfds, int timeout) = 0;
 };
 
 class CharDevice : public CharDeviceInterface {
- public:
-  CharDevice();
-  ~CharDevice() override;
+public:
+    CharDevice();
+    ~CharDevice() override;
 
-  int Open(const char* pathname, int flags) override;
-  int Close(int fd) override;
-  int Ioctl(int fd, int request, void* argp) override;
-  ssize_t Read(int fd, void* buf, size_t count) override;
-  ssize_t Write(int fd, const void* buf, size_t count) override;
-  int Poll(struct pollfd* fds, nfds_t nfds, int timeout) override;
+    int Open(const char* pathname, int flags) override;
+    int Close(int fd) override;
+    int Ioctl(int fd, int request, void* argp) override;
+    ssize_t Read(int fd, void* buf, size_t count) override;
+    ssize_t Write(int fd, const void* buf, size_t count) override;
+    int Poll(struct pollfd* fds, nfds_t nfds, int timeout) override;
 };
 
 class CharDeviceFactory {
- public:
-  CharDeviceFactory() {}
-  virtual ~CharDeviceFactory() {}
+public:
+    CharDeviceFactory() {}
+    virtual ~CharDeviceFactory() {}
 
-  virtual std::unique_ptr<CharDeviceInterface> NewCharDevice() = 0;
+    virtual std::unique_ptr<CharDeviceInterface> NewCharDevice() = 0;
 };
 
 

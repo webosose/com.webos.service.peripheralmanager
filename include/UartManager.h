@@ -17,67 +17,76 @@
 #pragma once
 
 #include <stdint.h>
-
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-
-
 #include "UartDriver.h"
 #include "Logger.h"
+#include "PinmuxManager.h"
 
 struct UartSysfs {
-  std::string name;
-  std::string path;
-  std::string mux;
-  std::unique_ptr<UartDriverInterface> driver_;
+    std::string name;
+    std::string path;
+    std::string mux;
+    std::unique_ptr<UartDriverInterface> driver_;
 };
 
 class UartDevice {
- public:
-  explicit UartDevice(UartSysfs* uart_device) : uart_device_(uart_device) {}
-  ~UartDevice() { uart_device_->driver_.reset(); }
+public:
+    explicit UartDevice(UartSysfs* uart_device) : uart_device_(uart_device) {}
+    ~UartDevice() {
+        if (!uart_device_->mux.empty()) {
+            PinMuxManager::GetPinMuxManager()->ReleaseSource(uart_device_->mux,uart_device_->mux);
+        }
+        uart_device_->driver_.reset();
+    }
 
-  int SetBaudrate(uint32_t baudrate) {
-    return uart_device_->driver_->SetBaudrate(baudrate);
-  }
+    int SetBaudrate(uint32_t baudrate) {
+        return uart_device_->driver_->SetBaudrate(baudrate);
+    }
+    uint32_t getBaudrate(uint32_t* baudrate){
+        return uart_device_->driver_->getBaudrate(baudrate);
+    }
 
-  int Write(const std::vector<uint8_t>& data, uint32_t* bytes_written) {
-    return uart_device_->driver_->Write(data, bytes_written);
-  }
+    int Write(const std::vector<uint8_t>& data, uint32_t* bytes_written) {
+        return uart_device_->driver_->Write(data, bytes_written);
+    }
 
-  int Read(std::vector<uint8_t>* data, uint32_t size, uint32_t* bytes_read) {
-    return uart_device_->driver_->Read(data, size, bytes_read);
-  }
+    int Read(std::vector<uint8_t>* data, uint32_t size, uint32_t* bytes_read) {
+        return uart_device_->driver_->Read(data, size, bytes_read);
+    }
+    bool GetuPollingFd(int* fd) {
+        return uart_device_->driver_->GetuPollingFd(fd);
+    }
 
- private:
-  UartSysfs* uart_device_;
+private:
+    UartSysfs* uart_device_;
 };
 
 class UartManager {
- public:
-  ~UartManager();
+public:
+    ~UartManager();
 
-  // Get the singleton.
-  static UartManager* GetManager();
-  static void ResetManager();
+    // Get the singleton.
+    static UartManager* GetManager();
+    static void ResetManager();
 
-  // Used by the BSP to tell PMan of an sysfs uart_device.
-  bool RegisterUartDevice(const std::string& name, const std::string& path);
-  bool SetPinMux(const std::string& name, const std::string& mux);
+    // Used by the BSP to tell PMan of an sysfs uart_device.
+    bool RegisterUartDevice(const std::string& name, const std::string& path);
+    bool SetPinMux(const std::string& name, const std::string& mux);
 
-  std::vector<std::string> GetDevicesList();
-  bool HasUartDevice(const std::string& name);
+    std::vector<std::string> GetDevicesList();
+    bool HasUartDevice(const std::string& name);
 
-  bool RegisterDriver(std::unique_ptr<UartDriverInfoBase> driver_info);
+    bool RegisterDriver(std::unique_ptr<UartDriverInfoBase> driver_info);
 
-  std::unique_ptr<UartDevice> OpenUartDevice(const std::string& name);
+    std::unique_ptr<UartDevice> OpenUartDevice(const std::string& name);
 
- private:
-  UartManager();
+private:
+    UartManager();
 
-  std::map<std::string, std::unique_ptr<UartDriverInfoBase>> driver_infos_;
-  std::map<std::string, UartSysfs> uart_devices_;
+    std::map<std::string, std::unique_ptr<UartDriverInfoBase>> driver_infos_;
+    std::map<std::string, UartSysfs> uart_devices_;
 
 };

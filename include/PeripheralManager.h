@@ -21,14 +21,14 @@
 #include "PeripheralManagerClient.h"
 
 class PeripheralManager {
- public:
-  PeripheralManager();
-  ~PeripheralManager();
+public:
+    PeripheralManager();
+    ~PeripheralManager();
 
-  bool Init();
+    bool Init();
 
- private:
-  bool InitHal();
-  bool RegisterDrivers();
+private:
+    bool InitHal();
+    bool RegisterDrivers();
 
 };

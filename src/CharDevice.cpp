@@ -15,7 +15,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "CharDevice.h"
-
 #include <fcntl.h>
 #include <poll.h>
 #include <sys/ioctl.h>
@@ -27,26 +26,26 @@ CharDevice::CharDevice() {}
 CharDevice::~CharDevice() {}
 
 int CharDevice::Open(const char* pathname, int flags) {
-  return open(pathname, flags);
+    return open(pathname, flags);
 }
 
 int CharDevice::Close(int fd) {
-  return close(fd);
+    return close(fd);
 }
 
 int CharDevice::Ioctl(int fd, int request, void* argp) {
-  return ioctl(fd, request, argp);
+    return ioctl(fd, request, argp);
 }
 
 ssize_t CharDevice::Read(int fd, void* buf, size_t count) {
-  return read(fd, buf, count);
+    return read(fd, buf, count);
 }
 
 ssize_t CharDevice::Write(int fd, const void* buf, size_t count) {
-  return write(fd, buf, count);
+    return write(fd, buf, count);
 }
 
 int CharDevice::Poll(struct pollfd* fds, nfds_t nfds, int timeout) {
-  return poll(fds, nfds, timeout);
+    return poll(fds, nfds, timeout);
 }
 

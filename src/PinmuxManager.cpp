@@ -24,139 +24,147 @@ PinMuxManager::~PinMuxManager() {}
 
 // static
 PinMuxManager* PinMuxManager::GetPinMuxManager() {
-  if (!g_pin_mux_manager) {
-    g_pin_mux_manager.reset(new PinMuxManager());
-  }
-  return g_pin_mux_manager.get();
+    if (!g_pin_mux_manager) {
+        g_pin_mux_manager.reset(new PinMuxManager());
+    }
+    return g_pin_mux_manager.get();
 }
 
 bool PinMuxManager::RegisterPin(std::string name,
-                                bool gpio,
-                                pin_mux_callbacks callbacks) {
-  if (pins_.count(name))
-    return false;
-  pins_[name] = {false, gpio, callbacks};
-  return true;
+        bool gpio,
+        pin_mux_callbacks callbacks) {
+    if (pins_.count(name))
+        return false;
+    pins_[name] = {false, gpio, callbacks};
+    return true;
 }
 
 bool PinMuxManager::RegisterPinGroup(std::string name,
-                                     std::set<std::string> pins) {
-  if (groups_.count(name))
-    return false;
+        std::set<std::string> pins) {
+    if (groups_.count(name)) {
+        return false;
+    }
 
-  // Check each pin is valid.
-  for (auto& p : pins) {
-    if (!pins_.count(p))
-      return false;
-  }
-  groups_[name] = pins;
-  return true;
+    // Check each pin is valid.
+    for (auto& p : pins) {
+        if (!pins_.count(p)) {
+            return false;
+        }
+    }
+    groups_[name] = pins;
+    return true;
 }
 
 bool PinMuxManager::RegisterSource(std::string name,
-                                   std::set<std::string> groups) {
-  if (sources_.count(name))
-    return false;
+        std::set<std::string> groups) {
+    if (sources_.count(name)) {
+        return false;
+    }
 
-  // Check each group is valid.
-  for (auto& g : groups) {
-    if (!groups_.count(g))
-      return false;
-  }
-  sources_[name] = groups;
-  return true;
+    // Check each group is valid.
+    for (auto& g : groups) {
+        if (!groups_.count(g)) {
+            return false;
+        }
+    }
+    sources_[name] = groups;
+    return true;
 }
 
 bool PinMuxManager::RegisterSimpleSource(std::string name,
-                                         std::set<std::string> pins) {
-  if (!RegisterPinGroup(name, pins))
-    return false;
-  if (!RegisterSource(name, {name})) {
-    // TODO(leecam): Unregister Group
-    return false;
-  }
-  return true;
+        std::set<std::string> pins) {
+    if (!RegisterPinGroup(name, pins)) {
+        return false;
+    }
+    if (!RegisterSource(name, {name})) {
+        // TODO(leecam): Unregister Group
+        return false;
+    }
+    return true;
 }
 
 bool PinMuxManager::SetSource(std::string name, std::string group) {
-  if (!sources_.count(name))
-    return false;
+    if (!sources_.count(name))
+        return false;
 
-  if (!sources_[name].count(group))
-    return false;
+    if (!sources_[name].count(group))
+        return false;
 
-  // Check to make sure each pin is not in use.
-  for (auto& p : groups_[group]) {
-    if (pins_[p].in_use)
-      return false;
-  }
+    // Check to make sure each pin is not in use.
+    for (auto& p : groups_[group]) {
+        if (pins_[p].in_use) {
+            return false;
+        }
+    }
 
-  // Enable each Pin
-  for (auto& p : groups_[group]) {
-    pins_[p].in_use = true;
+    // Enable each Pin
+    for (auto& p : groups_[group]) {
+        pins_[p].in_use = true;
 
-    // TODO(leecam): Handle failures here!!!
-    if (pins_[p].callbacks.mux_cb)
-      pins_[p].callbacks.mux_cb(p.c_str(), name.c_str());
-  }
+        // TODO(leecam): Handle failures here!!!
+        if (pins_[p].callbacks.mux_cb)
+            pins_[p].callbacks.mux_cb(p.c_str(), name.c_str());
+    }
 
-  return true;
+    return true;
 }
 
 void PinMuxManager::ReleaseSource(std::string name, std::string group) {
-  if (!sources_.count(name))
-    return;
-  if (!sources_[name].count(group))
-    return;
-  for (auto& p : groups_[group]) {
-    if (!pins_[p].in_use) {
-      AppLogWarning() << "Releasig Pin " << p << " that is not in use.";
+    if (!sources_.count(name)) {
+        return;
     }
-    pins_[p].in_use = false;
-  }
+    if (!sources_[name].count(group)) {
+        return;
+    }
+    for (auto& p : groups_[group]) {
+        if (!pins_[p].in_use) {
+            AppLogWarning() << "Releasig Pin " << p << " that is not in use.";
+        }
+        pins_[p].in_use = false;
+    }
 }
 
 bool PinMuxManager::SetSimpleSource(std::string name) {
-  return SetSource(name, name);
+    return SetSource(name, name);
 }
 
 bool PinMuxManager::SetGpio(std::string name) {
-  if (!pins_.count(name)) {
-    AppLogWarning() << "PinMuxManager: Pin not found " << name;
-    return false;
-  }
-  if (pins_[name].in_use) {
-    AppLogWarning() << "PinMuxManager: Pin in use " << name;
-    return false;
-  }
-  if (pins_[name].callbacks.mux_cb) {
-    if (!pins_[name].callbacks.mux_cb(name.c_str(), nullptr))
-      return false;
-  }
-  pins_[name].in_use = true;
-  return true;
+    if (!pins_.count(name)) {
+        AppLogWarning() << "PinMuxManager: Pin not found " << name;
+        return false;
+    }
+    if (pins_[name].in_use) {
+        AppLogWarning() << "PinMuxManager: Pin in use " << name;
+        return false;
+    }
+    if (pins_[name].callbacks.mux_cb) {
+        if (!pins_[name].callbacks.mux_cb(name.c_str(), nullptr))
+            return false;
+    }
+    pins_[name].in_use = true;
+    return true;
 }
 
 void PinMuxManager::ReleaseGpio(std::string name) {
-  if (!pins_.count(name))
-    return;
-  pins_[name].in_use = false;
+    if (!pins_.count(name))
+        return;
+    pins_[name].in_use = false;
 }
 
 bool PinMuxManager::SetGpioDirection(std::string name, bool output) {
-  if (!pins_.count(name)) {
-    AppLogWarning() << "SetGpioDirection pin not found " << name;
-    return false;
-  }
-  // Check if not in use - this should maybe be a DCHECK as
-  // it shoudn't be able to happen.
-  if (!pins_[name].in_use) {
-    AppLogWarning() << "SetGpioDirection not in use " << name;
-    return false;
-  }
-  if (pins_[name].callbacks.direction_cb)
-    return pins_[name].callbacks.direction_cb(name.c_str(), output);
+    if (!pins_.count(name)) {
+        AppLogWarning() << "SetGpioDirection pin not found " << name;
+        return false;
+    }
+    // Check if not in use - this should maybe be a DCHECK as
+    // it shoudn't be able to happen.
+    if (!pins_[name].in_use) {
+        AppLogWarning() << "SetGpioDirection not in use " << name;
+        return false;
+    }
+    if (pins_[name].callbacks.direction_cb)
+        return pins_[name].callbacks.direction_cb(name.c_str(), output);
 
-  return true;
+    return true;
 }
 
