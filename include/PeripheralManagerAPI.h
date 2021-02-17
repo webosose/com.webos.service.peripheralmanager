@@ -62,6 +62,11 @@ public:
     bool I2cRead(LSMessage &ls_message);
     bool I2cReadRegByte(LSMessage &ls_message);
     bool I2cReadRegWord(LSMessage &ls_message);
+    bool I2cReadRegBuffer(LSMessage &ls_message);
+    bool I2cWrite(LSMessage &ls_message);
+    bool I2cWriteRegByte(LSMessage &ls_message);
+    bool I2cWriteRegWord(LSMessage &ls_message);
+    bool I2cWriteRegBuffer(LSMessage &ls_message);
 
     void subscribeLoraReceive();
     static bool receiveCallback(LSHandle *sh, LSMessage *reply, void *ctx);

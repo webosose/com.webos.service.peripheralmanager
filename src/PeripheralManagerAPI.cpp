@@ -1407,6 +1407,351 @@ bool PeripheralManagerService::I2cReadRegWord(LSMessage &ls_message) {
     }
     return true;
 }
+
+bool PeripheralManagerService::I2cReadRegBuffer(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    pbnjson::JValue response_json;
+    pbnjson::JValue data_array = pbnjson::JArray();
+    bool ret = false;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "reg" )
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ " property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        if (parsed.hasKey("name") && parsed.hasKey("address") && parsed.hasKey("reg"))
+        {
+            try {
+                const std::string name = parsed["name"].asString();
+                int32_t address = parsed["address"].asNumber<int>();
+                int32_t reg = parsed["reg"].asNumber<int>();
+                std::vector<uint8_t> data;
+                int32_t size = parsed["size"].asNumber<int>();
+                int32_t bytes_read = 0;
+                peripheral_manager_client->I2cReadRegBuffer(name, address, reg, &data, size, &bytes_read);
+                int n = data.size();
+                for (int i = 0; i < n; i++)
+                {
+                    data_array <<  data[i];
+                }
+                response_json =
+                        pbnjson::JObject{
+                    {"returnValue", true},
+                    {"size", bytes_read},
+                    {"data", data_array}
+                };
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
+        else {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/address/reg  is missing"}};
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+
+    }
+    return true;
+}
+bool PeripheralManagerService::I2cWrite(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    pbnjson::JValue response_json;
+    bool ret = false;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "data" || ii.first.asString() == "size" )
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ " property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        if (parsed.hasKey("name") && parsed.hasKey("address") && parsed.hasKey("data") && parsed.hasKey("size"))
+        {
+            try {
+                const std::string name = parsed["name"].asString();
+                int32_t address  = parsed["address"].asNumber<int>();
+                int32_t size = parsed["size"].asNumber<int>();
+
+                pbnjson::JValue jsonData = parsed["data"];
+                int jsonDataSize = jsonData.arraySize();
+                std::vector<uint8_t> data;
+                for (int i = 0; i < jsonDataSize; i++) {
+                    uint8_t dataTemp = jsonData[i].asNumber<int>();
+                    data.push_back(dataTemp);
+                }
+
+                int bytes_written = 0;
+                peripheral_manager_client->I2cWrite( name, address, data, &bytes_written);
+                response_json =
+                        pbnjson::JObject{
+                    {"returnValue", true},
+                    {"size", bytes_written}
+                };
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
+        else {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/address/data/size  is missing"}};
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+
+    }
+    return true;
+}
+
+bool PeripheralManagerService::I2cWriteRegByte(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    pbnjson::JValue response_json;
+    bool ret = false;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "reg" || ii.first.asString() == "data" )
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ " property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        if (parsed.hasKey("name") && parsed.hasKey("address") && parsed.hasKey("data") && parsed.hasKey("reg"))
+        {
+            try {
+                const std::string name = parsed["name"].asString();
+                int32_t address = parsed["address"].asNumber<int>();
+                int32_t reg = parsed["reg"].asNumber<int>();
+                int8_t data = parsed["data"].asNumber<int>();
+                peripheral_manager_client->I2cWriteRegByte( name, address, reg, data);
+                response_json =
+                        pbnjson::JObject{
+                    {"returnValue", true}
+                };
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
+        else {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/address/reg/data  is missing"}};
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+
+    }
+    return true;
+}
+
+bool PeripheralManagerService::I2cWriteRegWord(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    pbnjson::JValue response_json;
+    bool ret = false;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "reg" || ii.first.asString() == "data" )
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ " property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        if (parsed.hasKey("name") && parsed.hasKey("address") && parsed.hasKey("reg") && parsed.hasKey("data"))
+        {
+            try {
+                const std::string name = parsed["name"].asString();
+                int32_t address = parsed["address"].asNumber<int>();
+                int32_t reg = parsed["reg"].asNumber<int>();
+                int32_t data = parsed["data"].asNumber<int>();
+                peripheral_manager_client->I2cWriteRegWord(name, address, reg, data);
+                response_json =
+                        pbnjson::JObject{
+                    {"returnValue", true}
+                };
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
+        else{
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/address/data/reg  is missing"}};
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+    }
+    return true;
+}
+
+
+bool PeripheralManagerService::I2cWriteRegBuffer(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    pbnjson::JValue response_json;
+    bool ret = false;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+
+        return false;
+    } else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "reg"  || ii.first.asString() == "data" || ii.first.asString() == "size")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ " property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        if (parsed.hasKey("name") && parsed.hasKey("address") && parsed.hasKey("reg") && parsed.hasKey("data")&& parsed.hasKey("size"))
+        {
+            try {
+                const std::string name = parsed["name"].asString();
+                int32_t address = parsed["address"].asNumber<int>();
+                int32_t reg = parsed["reg"].asNumber<int>();
+
+                pbnjson::JValue jsonData = parsed["data"];
+                int jsonDataSize = jsonData.arraySize();
+                std::vector<uint8_t> data;
+                for (int i = 0; i < jsonDataSize; i++) {
+                    uint8_t dataTemp = jsonData[i].asNumber<int>();
+                    data.push_back(dataTemp);
+                }
+
+                int32_t size = parsed["size"].asNumber<int>();
+                int32_t bytes_written = 0;
+                peripheral_manager_client->I2cWriteRegBuffer(name, address, reg, data, &bytes_written);
+                response_json =
+                        pbnjson::JObject{
+                    {"returnValue", true},
+                    {"size" , bytes_written}
+                };
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
+        else {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/address/data/reg/size  is missing"}};
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+    }
+    return true;
+}
 // Private Methods
 void PeripheralManagerService::registerMethodsToLsHub() {
     static const LSMethod gpio[] = {
@@ -1465,6 +1810,16 @@ void PeripheralManagerService::registerMethodsToLsHub() {
         {"readRegByte", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::I2cReadRegByte>,
         static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
         {"readRegWord", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::I2cReadRegWord>,
+        static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+        {"readRegBuffer", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::I2cReadRegBuffer>,
+        static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+        {"write", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::I2cWrite>,
+        static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+        {"writeRegByte", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::I2cWriteRegByte>,
+        static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+        {"writeRegWord", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::I2cWriteRegWord>,
+        static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+        {"writeRegBuffer", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::I2cWriteRegBuffer>,
         static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
         {nullptr, nullptr}};
 
