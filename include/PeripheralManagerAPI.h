@@ -74,6 +74,10 @@ public:
     bool SpiDeviceWriteBuffer(LSMessage &ls_message);
     bool SpiDeviceTransfer(LSMessage &ls_message);
     bool SpiDeviceSetMode(LSMessage &ls_message);
+    bool SpiDeviceSetFrequency(LSMessage &ls_message);
+    bool SpiDeviceSetBitJustification(LSMessage &ls_message);
+    bool SpiDeviceSetBitsPerWord(LSMessage &ls_message);
+    bool SpiDeviceSetDelay(LSMessage &ls_message);
 
     void subscribeLoraReceive();
     static bool receiveCallback(LSHandle *sh, LSMessage *reply, void *ctx);
