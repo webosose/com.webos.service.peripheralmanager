@@ -67,6 +67,10 @@ public:
     bool I2cWriteRegByte(LSMessage &ls_message);
     bool I2cWriteRegWord(LSMessage &ls_message);
     bool I2cWriteRegBuffer(LSMessage &ls_message);
+    bool ListSpiBuses(LSMessage &ls_message);
+    bool OpenSpiDevice(LSMessage &ls_message);
+    bool ReleaseSpiDevice(LSMessage &ls_message);
+    bool SpiDeviceWriteByte(LSMessage &ls_message);
 
     void subscribeLoraReceive();
     static bool receiveCallback(LSHandle *sh, LSMessage *reply, void *ctx);

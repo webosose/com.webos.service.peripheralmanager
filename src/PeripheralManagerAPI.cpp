@@ -1752,6 +1752,240 @@ bool PeripheralManagerService::I2cWriteRegBuffer(LSMessage &ls_message) {
     }
     return true;
 }
+
+bool PeripheralManagerService::ListSpiBuses(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "subscribe")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+" property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }else {
+            subscription = parsed["subscribe"].asBool();
+            std::vector<std::string> buses;
+            try {
+                peripheral_manager_client->ListSpiBuses(&buses);
+                pbnjson::JValue bus_list = pbnjson::JArray();
+                for (std::string device : buses) {
+                    bus_list << device;
+                }
+                response_json =
+                        pbnjson::JObject{
+                    {"returnValue", true},
+                    {"list", bus_list}
+                };
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
+    }
+    return true;
+}
+bool PeripheralManagerService::OpenSpiDevice(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    pbnjson::JValue response_json;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "name")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ " property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        if (parsed.hasKey("name"))
+        {
+            const std::string name = parsed["name"].asString();
+            try {
+                peripheral_manager_client->OpenSpiDevice(name);
+                response_json =
+                        pbnjson::JObject{
+                    {"returnValue", true}
+                };
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
+        else {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name is missing"}};
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+    }
+    return true;
+}
+bool PeripheralManagerService::ReleaseSpiDevice(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    pbnjson::JValue response_json;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    }else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "name")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ " property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        if (parsed.hasKey("name"))
+        {
+            const std::string name = parsed["name"].asString();
+            try {
+                peripheral_manager_client->ReleaseSpiDevice(name);
+
+                response_json =
+                        pbnjson::JObject{
+                    {"returnValue", true}
+                };
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
+        else {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name is missing"}};
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+    }
+    return true;
+}
+
+bool PeripheralManagerService::SpiDeviceWriteByte(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    bool subscription = false;
+    pbnjson::JValue response_json;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "name" || ii.first.asString() == "data")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+" property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        if (parsed.hasKey("name") && parsed.hasKey("data"))
+        {
+            std::string name = parsed["name"].asString();
+            int8_t data = parsed["data"].asNumber<int>();
+            try {
+                peripheral_manager_client->SpiDeviceWriteByte(name,data);
+                response_json =
+                        pbnjson::JObject{
+                    {"returnValue", true}
+                };
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
+        else {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/data  is missing"}};
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+
+    }
+    return true;
+}
 // Private Methods
 void PeripheralManagerService::registerMethodsToLsHub() {
     static const LSMethod gpio[] = {
@@ -1825,4 +2059,18 @@ void PeripheralManagerService::registerMethodsToLsHub() {
 
     luna_handle->registerCategory("/i2c", i2c, nullptr, nullptr);
     luna_handle->setCategoryData("/i2c", this);
+
+        static const LSMethod spi[] = {
+        {"list", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::ListSpiBuses>,
+        static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+        {"open", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::OpenSpiDevice>,
+        static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+        {"close", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::ReleaseSpiDevice>,
+        static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+        {"writeByte", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::SpiDeviceWriteByte>,
+        static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+        {nullptr, nullptr}};
+
+    luna_handle->registerCategory("/spi", spi, nullptr, nullptr);
+    luna_handle->setCategoryData("/spi", this);
 }
