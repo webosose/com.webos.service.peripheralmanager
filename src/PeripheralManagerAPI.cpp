@@ -1031,6 +1031,63 @@ bool PeripheralManagerService::GetuartPollingFd(LSMessage &ls_message) {
     return true;
 }
 
+bool PeripheralManagerService::ListI2cBuses(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    pbnjson::JValue response_json;
+    bool ret = false;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    } else {
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "subscribe")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+" property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        else{
+            try {
+                std::vector<std::string> buses;
+                peripheral_manager_client->ListI2cBuses(&buses);
+                pbnjson::JValue device_list = pbnjson::JArray();
+                for (std::string device : buses) {
+                    device_list << device;
+                }
+                response_json =
+                        pbnjson::JObject{
+                    {"returnValue", true},
+                    {"i2cBusList", device_list}
+                };
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
+            request.respond(response_json.stringify().c_str());
+        }
+    }
+    return true;
+}
 // Private Methods
 void PeripheralManagerService::registerMethodsToLsHub() {
     static const LSMethod gpio[] = {
@@ -1077,4 +1134,11 @@ void PeripheralManagerService::registerMethodsToLsHub() {
     luna_handle->registerCategory("/uart", uart, nullptr, nullptr);
     luna_handle->setCategoryData("/uart", this);
 
+    static const LSMethod i2c[] = {
+        {"list", &LS::Handle::methodWraper<PeripheralManagerService, &PeripheralManagerService::ListI2cBuses>,
+        static_cast<LSMethodFlags>(LUNA_METHOD_FLAG_VALIDATE_IN)},
+        {nullptr, nullptr}};
+
+    luna_handle->registerCategory("/i2c", i2c, nullptr, nullptr);
+    luna_handle->setCategoryData("/i2c", this);
 }
