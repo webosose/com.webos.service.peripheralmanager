@@ -58,6 +58,8 @@ public:
     bool GetuartPollingFd(LSMessage &ls_message);
     bool ListI2cBuses(LSMessage &ls_message);
     bool OpenI2cDevice(LSMessage &ls_message);
+    bool ReleaseI2cDevice(LSMessage &ls_message);
+    bool I2cRead(LSMessage &ls_message);
 
     void subscribeLoraReceive();
     static bool receiveCallback(LSHandle *sh, LSMessage *reply, void *ctx);
