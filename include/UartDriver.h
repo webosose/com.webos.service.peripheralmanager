@@ -24,41 +24,43 @@
 
 
 class UartDriverInterface {
- public:
-  virtual ~UartDriverInterface() {}
+public:
+    virtual ~UartDriverInterface() {}
 
-  virtual bool Init(const std::string& name) = 0;
+    virtual bool Init(const std::string& name) = 0;
 
-  virtual int SetBaudrate(uint32_t baudrate) = 0;
+    virtual int SetBaudrate(uint32_t baudrate) = 0;
+    virtual uint32_t getBaudrate(uint32_t* baudrate) = 0;
 
-  virtual int Write(const std::vector<uint8_t>& data,
-                    uint32_t* bytes_written) = 0;
+    virtual int Write(const std::vector<uint8_t>& data,
+            uint32_t* bytes_written) = 0;
 
-  virtual int Read(std::vector<uint8_t>* data,
-                   uint32_t size,
-                   uint32_t* bytes_read) = 0;
+    virtual int Read(std::vector<uint8_t>* data,
+            uint32_t size,
+            uint32_t* bytes_read) = 0;
+    virtual int  GetuPollingFd(int * fd) = 0;
 };
 
 class UartDriverInfoBase {
- public:
-  virtual ~UartDriverInfoBase() {}
+public:
+    virtual ~UartDriverInfoBase() {}
 
-  virtual std::string Compat() = 0;
-  virtual std::unique_ptr<UartDriverInterface> Probe() = 0;
+    virtual std::string Compat() = 0;
+    virtual std::unique_ptr<UartDriverInterface> Probe() = 0;
 };
 
 template <class T, class PARAM>
 class UartDriverInfo : public UartDriverInfoBase {
- public:
-  explicit UartDriverInfo(PARAM param) : param_(param) {}
-  ~UartDriverInfo() override {}
+public:
+    explicit UartDriverInfo(PARAM param) : param_(param) {}
+    ~UartDriverInfo() override {}
 
-  std::string Compat() override { return T::Compat(); }
+    std::string Compat() override { return T::Compat(); }
 
-  std::unique_ptr<UartDriverInterface> Probe() override {
-    return std::unique_ptr<UartDriverInterface>(new T(param_));
-  }
+    std::unique_ptr<UartDriverInterface> Probe() override {
+        return std::unique_ptr<UartDriverInterface>(new T(param_));
+    }
 
- private:
-  PARAM param_;
+private:
+    PARAM param_;
 };

@@ -22,8 +22,6 @@
 #include <string.h>
 #include "GpioDriverSysfs.h"
 
-namespace {
-
 // Path to sysfd gpio.
 const char kSysfsGpioPathPrefix[] = "/sys/class/gpio/gpio";
 
@@ -57,165 +55,164 @@ const char kDirIn[] = "in";
 const char kValueHigh[] = "1";
 const char kValueLow[] = "0";
 
-}  // namespace
-
 GpioDriverSysfs::GpioDriverSysfs(void* arg) : fd_(-1) {}
 
 GpioDriverSysfs::~GpioDriverSysfs() {
-  if (fd_ >= 0) {
-    close(fd_);
-  }
+    if (fd_ >= 0) {
+        close(fd_);
+    }
 }
 
 bool GpioDriverSysfs::Init(uint32_t index) {
-  if (!ExportGpio(index)) {
-      AppLogError() <<  "GpioDriverSysfs: Failed to export " << index;
-    return false;
-  }
-  std::string path = kSysfsGpioPathPrefix + std::to_string(index);
+    if (!ExportGpio(index)) {
+        AppLogError() <<  "GpioDriverSysfs: Failed to export " << index;
+        return false;
+    }
+    std::string path = kSysfsGpioPathPrefix + std::to_string(index);
 
-  int fd = open(path.c_str(), O_RDONLY);
-  if (fd < 0) {
-      AppLogError()  << "Failed to open " << path;
-    return false;
-  }
+    int fd = open(path.c_str(), O_RDONLY);
+    if (fd < 0) {
+        AppLogError()  << "Failed to open " << path;
+        return false;
+    }
 
-  fd_ = fd;
-  return true;
+    fd_ = fd;
+    return true;
 }
 
 bool GpioDriverSysfs::SetValue(bool val) {
-  bool success = val ? Enable() : Disable();
-  if (!success) {
-      AppLogError() << __func__ << ":" << __LINE__  << "Failed to set the value of the GPIO. Is it configured as "
-                               << "output?";
-  }
-  return success;
+    bool success = val ? Enable() : Disable();
+    if (!success) {
+        AppLogError() << "Failed to set the value of the GPIO. Is it configured as "
+                << "output?";
+    }
+    return success;
 }
 
 bool GpioDriverSysfs::GetValue(bool* val) {
-  std::string read_val;
-  if (!ReadFromFile(kValue, &read_val))
-    return false;
-  if (read_val.size() < 1) {
-    return false;
-  }
-  // Remove any whitespace.
-  read_val = read_val[0];
-  if (read_val == kValueHigh)
-    *val = true;
-  else
-    *val = false;
-  return true;
+    std::string read_val;
+    if (!ReadFromFile(kValue, &read_val))
+        return false;
+    if (read_val.size() < 1) {
+        return false;
+    }
+    // Remove any whitespace.
+    read_val = read_val[0];
+    if (read_val == kValueHigh)
+        *val = true;
+    else
+        *val = false;
+    return true;
 }
 
 bool GpioDriverSysfs::SetDirection(GpioDirection direction) {
-  switch (direction) {
+    switch (direction) {
     case kDirectionIn:
-      return WriteToFile(kDirection, kDirIn);
+        return WriteToFile(kDirection, kDirIn);
     case kDirectionOutInitiallyHigh:
-      return WriteToFile(kDirection, kDirHigh);
+        return WriteToFile(kDirection, kDirHigh);
     case kDirectionOutInitiallyLow:
-      return WriteToFile(kDirection, kDirLow);
-  }
-  return false;
+        return WriteToFile(kDirection, kDirLow);
+    }
+    return false;
 }
+
 bool GpioDriverSysfs::getDirection(std::string& direction) {
-  std::string read_direction;
-  if (!ReadFromFileDirection(kDirection, &read_direction))
-      return false;
+    std::string read_direction;
+    if (!ReadFromFileDirection(kDirection, &read_direction))
+        return false;
 
-  if (read_direction.size() < 0)
-    return false;
+    if (read_direction.size() < 0)
+        return false;
 
-  direction = read_direction;
+    direction = read_direction;
 
-  return true;
+    return true;
 }
 
-bool GpioDriverSysfs::GetPollingFd(void * fd) {
-  int f = openat(fd_, kValue, O_RDWR);
-  if (f < 0)
-    return false;
-
-  return true;
+int  GpioDriverSysfs::GetPollingFd(int * fd) {
+    int f = openat(fd_, kValue, O_RDWR);
+    if (f < 0)
+        return false;
+    *fd =f;
+    return *fd;
 }
 
 bool GpioDriverSysfs::Enable() {
-  return WriteToFile(kValue, kValueHigh);
+    return WriteToFile(kValue, kValueHigh);
 }
 
 bool GpioDriverSysfs::Disable() {
-  return WriteToFile(kValue, kValueLow);
+    return WriteToFile(kValue, kValueLow);
 }
 
 bool GpioDriverSysfs::WriteToFile(const std::string& file,
-                                  const std::string& value) {
-  int fd = openat(fd_, file.c_str(), O_RDWR);
-  if (fd < 0)
-    return false;
+        const std::string& value) {
+    int fd = openat(fd_, file.c_str(), O_RDWR);
+    if (fd < 0)
+        return false;
 
-  ssize_t bytes = write(fd, value.c_str(), value.size());
-  close(fd);
-  if (bytes < 0)
-    return false;
-  if ((size_t)bytes != value.size())
-    return false;
-  return true;
+    ssize_t bytes = write(fd, value.c_str(), value.size());
+    close(fd);
+    if (bytes < 0)
+        return false;
+    if ((size_t)bytes != value.size())
+        return false;
+    return true;
 }
 
 bool GpioDriverSysfs::ReadFromFile(const std::string& file,
-                                   std::string* value) {
-  int fd = openat(fd_, file.c_str(), O_RDONLY);
-  if (fd < 0)
-    return false;
-  char tmp_buf[16] = "";
-  ssize_t bytes = read(fd, tmp_buf, sizeof(tmp_buf));
-  close(fd);
-  if (bytes < 0)
-    return false;
-  value->assign(tmp_buf, bytes);
+        std::string* value) {
+    int fd = openat(fd_, file.c_str(), O_RDONLY);
+    if (fd < 0)
+        return false;
+    char tmp_buf[16] = "";
+    ssize_t bytes = read(fd, tmp_buf, sizeof(tmp_buf));
+    close(fd);
+    if (bytes < 0)
+        return false;
+    value->assign(tmp_buf, bytes);
 
-  return true;
+    return true;
 }
 
 bool GpioDriverSysfs::ReadFromFileDirection(const std::string& file,
-                                   std::string* value) {
-  int fd = openat(fd_, file.c_str(), O_RDONLY);
-  if (fd < 0)
-    return false;
-  char tmp_buf[16] = "";
-  ssize_t bytes = read(fd, tmp_buf, sizeof(tmp_buf));
-  close(fd);
-  if (bytes < 0)
-    return false;
-  int size = strlen(tmp_buf);
-  value->assign(tmp_buf, size-1);
-  return true;
+        std::string* value) {
+    int fd = openat(fd_, file.c_str(), O_RDONLY);
+    if (fd < 0)
+        return false;
+    char tmp_buf[16] = "";
+    ssize_t bytes = read(fd, tmp_buf, sizeof(tmp_buf));
+    close(fd);
+    if (bytes < 0)
+        return false;
+    int size = strlen(tmp_buf);
+    value->assign(tmp_buf, size-1);
+    return true;
 }
 
 bool GpioDriverSysfs::ExportGpio(uint32_t index) {
-  // Check if the pin is already exported.
-  // It will fail otherwise.
-  std::string path = kSysfsGpioPathPrefix + std::to_string(index);
-  struct stat stat_buf;
-  if (!stat(path.c_str(), &stat_buf)) {
+    // Check if the pin is already exported.
+    // It will fail otherwise.
+    std::string path = kSysfsGpioPathPrefix + std::to_string(index);
+    struct stat stat_buf;
+    if (!stat(path.c_str(), &stat_buf)) {
+        return true;
+    }
+    int fd = open(kSysfsGpioExportPath, O_WRONLY);
+    if (fd < 0) {
+        AppLogError() <<  "Failed to open " << kSysfsGpioExportPath;
+        return false;
+    }
+    std::string value = std::to_string(index);
+    ssize_t bytes = write(fd, value.c_str(), value.size());
+    close(fd);
+    if (bytes < 0) {
+        AppLogError()  << "Failed to write " << bytes;
+        return false;
+    }
+    if ((size_t)bytes != value.size()) {
+        return false;
+    }
     return true;
-  }
-  int fd = open(kSysfsGpioExportPath, O_WRONLY);
-  if (fd < 0) {
-      AppLogError() <<  "Failed to open " << kSysfsGpioExportPath;
-    return false;
-  }
-  std::string value = std::to_string(index);
-  ssize_t bytes = write(fd, value.c_str(), value.size());
-  close(fd);
-  if (bytes < 0) {
-      AppLogError()  << "Failed to write " << bytes;
-    return false;
-  }
-  if ((size_t)bytes != value.size()) {
-    return false;
-  }
-  return true;
 }

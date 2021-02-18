@@ -15,6 +15,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "GpioManager.h"
+#include "PinmuxManager.h"
 
 std::unique_ptr<GpioManager> g_gpio_manager;
 
@@ -50,40 +51,12 @@ bool GpioManager::SetPinMux(const std::string& name, const std::string& mux) {
 
 std::vector<std::string> GpioManager::GetGpioPins() {
     std::vector<std::string> pins;
-    sysfs_pins_["gpio1"].index = 1;
-    sysfs_pins_["gpio2"].index = 2;
-    sysfs_pins_["gpio3"].index = 3;
-    sysfs_pins_["gpio4"].index = 4;
-    sysfs_pins_["gpio5"].index = 5;
-    sysfs_pins_["gpio6"].index = 6;
-    sysfs_pins_["gpio7"].index = 7;
-    sysfs_pins_["gpio8"].index = 8;
-    sysfs_pins_["gpio9"].index = 9;
-    sysfs_pins_["gpio10"].index = 10;
-    sysfs_pins_["gpio11"].index = 11;
-    sysfs_pins_["gpio12"].index = 12;
-    sysfs_pins_["gpio13"].index = 13;
-    sysfs_pins_["gpio14"].index = 14;
-    sysfs_pins_["gpio15"].index = 15;
-    sysfs_pins_["gpio16"].index = 16;
-    sysfs_pins_["gpio17"].index = 17;
-    sysfs_pins_["gpio18"].index = 18;
-    sysfs_pins_["gpio19"].index = 19;
-    sysfs_pins_["gpio20"].index = 20;
-    sysfs_pins_["gpio21"].index = 21;
-    sysfs_pins_["gpio22"].index = 22;
-    sysfs_pins_["gpio23"].index = 23;
-    sysfs_pins_["gpio24"].index = 24;
-    sysfs_pins_["gpio25"].index = 25;
-
     for (auto& i : sysfs_pins_)
         pins.push_back(i.first);
     return pins;
 }
 
 bool GpioManager::HasGpio(const std::string& pin_name) {
-    for (auto& i : sysfs_pins_)
-        AppLogError()  << "pin:" << i.first;
     return sysfs_pins_.count(pin_name);
 }
 
@@ -99,13 +72,13 @@ std::unique_ptr<GpioPin> GpioManager::OpenGpioPin(const std::string& name) {
     // Get the Pin  from the BSP.
     auto pin_it = sysfs_pins_.find(name);
     if (pin_it == sysfs_pins_.end()) {
-        AppLogError() << "GpioManager: Pin not found. " << name; ;
+        AppLogError() << "GpioManager: Pin not found. " << name;
         return nullptr;
     }
 
     // Check its not alread in use
     if (pin_it->second.driver_) {
-        AppLogError() << "GpioManager: Pin in use. " << name;;
+        AppLogError() << "GpioManager: Pin in use. " << name;
         return nullptr;
     }
 
@@ -121,7 +94,10 @@ std::unique_ptr<GpioPin> GpioManager::OpenGpioPin(const std::string& name) {
 
     std::unique_ptr<GpioDriverInterface> driver(driver_info_it->second->Probe());
 
-
+    // Set pin mux
+    if (!pin_it->second.mux.empty()) {
+        PinMuxManager::GetPinMuxManager()->SetGpio(pin_it->second.mux);
+    }
     AppLogError() << "pin_it->second.index = " << pin_it->second.index;
     if (!driver->Init(pin_it->second.index)) {
         AppLogError() << "GpioManager: Failed to init driver " << name; ;

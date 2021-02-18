@@ -16,38 +16,35 @@
 
 #pragma once
 
-
 #include <stdint.h>
-
-//#include <base/macros.h>
-
 #include "CharDevice.h"
 #include "UartDriver.h"
 #include "Logger.h"
 
-
 class UartDriverSysfs : public UartDriverInterface {
- public:
-  explicit UartDriverSysfs(CharDeviceFactory* factory);
-  ~UartDriverSysfs();
+public:
+    explicit UartDriverSysfs(CharDeviceFactory* factory);
+    ~UartDriverSysfs();
 
-  static std::string Compat() { return "UARTSYSFS"; }
+    static std::string Compat() { return "UARTSYSFS"; }
 
-  bool Init(const std::string& name) override;
+    bool Init(const std::string& name) override;
 
-  int SetBaudrate(uint32_t baudrate) override;
+    int SetBaudrate(uint32_t baudrate) override;
+    uint32_t getBaudrate(uint32_t* baudrate) override;
 
-  int Write(const std::vector<uint8_t>& data, uint32_t* bytes_written) override;
+    int Write(const std::vector<uint8_t>& data, uint32_t* bytes_written) override;
 
-  int Read(std::vector<uint8_t>* data,
-           uint32_t size,
-           uint32_t* bytes_read) override;
+    int Read(std::vector<uint8_t>* data,
+            uint32_t size,
+            uint32_t* bytes_read) override;
+    int  GetuPollingFd(int * fd) override;
 
- private:
-  int fd_;
-  std::string path_;
+private:
+    int fd_;
+    std::string path_;
 
-  CharDeviceFactory* char_device_factory_;
-  std::unique_ptr<CharDeviceInterface> char_interface_;
+    CharDeviceFactory* char_device_factory_;
+    std::unique_ptr<CharDeviceInterface> char_interface_;
 
 };

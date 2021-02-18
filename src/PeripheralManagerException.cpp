@@ -43,7 +43,7 @@ const std::map<PeripheralManagerErrors, std::string> error_text {
 PeripheralManagerException::PeripheralManagerException() : error_code(PeripheralManagerErrors::kUnknownError) { setErrorMsg(); }
 
 PeripheralManagerException::PeripheralManagerException(const std::string& err_msg, const PeripheralManagerErrors err_code) : user_error_message(err_msg),
-                                                                                                           error_code(err_code)
+        error_code(err_code)
 {
     setErrorMsg();
 }

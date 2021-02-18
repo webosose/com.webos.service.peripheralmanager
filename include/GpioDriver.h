@@ -26,43 +26,41 @@
 // This interface must be implemented by all
 // Gpio drivers.
 class GpioDriverInterface {
- public:
-  GpioDriverInterface() {}
-  virtual ~GpioDriverInterface() {}
+public:
+    GpioDriverInterface() {}
+    virtual ~GpioDriverInterface() {}
 
-  // TODO(leecam): Init should have generic params.
-  virtual bool Init(uint32_t index) = 0;
+    virtual bool Init(uint32_t index) = 0;
 
-  virtual bool SetValue(bool val) = 0;
-  virtual bool GetValue(bool* val) = 0;
-  virtual bool SetDirection(GpioDirection direction) = 0;
-  virtual bool GetPollingFd(void * fd) = 0;
-  virtual bool getDirection(std::string& direction) =0;
+    virtual bool SetValue(bool val) = 0;
+    virtual bool GetValue(bool* val) = 0;
+    virtual bool SetDirection(GpioDirection direction) = 0;
+    virtual int  GetPollingFd(int * fd) = 0;
+    virtual bool getDirection(std::string& direction) =0;
 };
 
 // The following is driver boilerplate.
-// TODO(leecam): Abstract this into a seperate Driver class.
 class GpioDriverInfoBase {
- public:
-  GpioDriverInfoBase() {}
-  virtual ~GpioDriverInfoBase() {}
+public:
+    GpioDriverInfoBase() {}
+    virtual ~GpioDriverInfoBase() {}
 
-  virtual std::string Compat() = 0;
-  virtual std::unique_ptr<GpioDriverInterface> Probe() = 0;
+    virtual std::string Compat() = 0;
+    virtual std::unique_ptr<GpioDriverInterface> Probe() = 0;
 };
 
 template <class T, class PARAM>
 class GpioDriverInfo : public GpioDriverInfoBase {
- public:
-  explicit GpioDriverInfo(PARAM param) : param_(param) {}
-  ~GpioDriverInfo() override {}
+public:
+    explicit GpioDriverInfo(PARAM param) : param_(param) {}
+    ~GpioDriverInfo() override {}
 
-  std::string Compat() override { return T::Compat(); }
+    std::string Compat() override { return T::Compat(); }
 
-  std::unique_ptr<GpioDriverInterface> Probe() override {
-    return std::unique_ptr<GpioDriverInterface>(new T(param_));
-  }
+    std::unique_ptr<GpioDriverInterface> Probe() override {
+        return std::unique_ptr<GpioDriverInterface>(new T(param_));
+    }
 
- private:
-  PARAM param_;
+private:
+    PARAM param_;
 };

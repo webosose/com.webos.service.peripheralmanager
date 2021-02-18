@@ -19,27 +19,27 @@
 #pragma once
 
 enum GpioEdgeType {
-  kEdgeNone,
-  kEdgeRising,
-  kEdgeFalling,
-  kEdgeBoth,
+    kEdgeNone,
+    kEdgeRising,
+    kEdgeFalling,
+    kEdgeBoth,
 };
 
 enum GpioDirection {
-  kDirectionIn,
-  kDirectionOutInitiallyHigh,
-  kDirectionOutInitiallyLow,
+    kDirectionIn,
+    kDirectionOutInitiallyHigh,
+    kDirectionOutInitiallyLow,
 };
 
 enum GpioActiveType {
-  kActiveLow,
-  kActiveHigh,
+    kActiveLow,
+    kActiveHigh,
 };
 
 // The SPI modes are the same as the ones defined by the linux kernel.
 enum SpiMode {
-  kMode0,
-  kMode1,
-  kMode2,
-  kMode3,
+    kMode0,
+    kMode1,
+    kMode2,
+    kMode3,
 };

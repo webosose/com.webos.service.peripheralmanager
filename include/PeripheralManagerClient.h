@@ -24,61 +24,158 @@
 #include <vector>
 #include <bits/stdc++.h>
 #include "GpioManager.h"
+#include "I2cManager.h"
+#include "SpiManager.h"
 #include "UartManager.h"
-
 
 using namespace std;
 
 typedef void Status;
 
+struct DevicesPinInfo {
+    std::string name;
+    std::string status;
+};
 class PeripheralManagerClient {
- public:
-  PeripheralManagerClient();
-  ~PeripheralManagerClient();
+public:
+    PeripheralManagerClient();
+    ~PeripheralManagerClient();
 
-  // Gpio functions.
-  Status ListGpio(std::vector<std::string>* gpios) ;
+    // Gpio functions.
+    Status ListGpio(std::vector<DevicesPinInfo>& gpios) ;
 
-  bool OpenGpio(const std::string& name) ;
+    bool OpenGpio(const std::string& name) ;
 
-  bool  ReleaseGpio(const std::string& name) ;
+    bool  ReleaseGpio(const std::string& name) ;
 
-  bool  SetGpioDirection(const std::string& name,
-                          int direction) ;
+    bool  SetGpioDirection(const std::string& name,
+            int direction) ;
 
-  bool  SetGpioValue(const std::string& name, bool value) ;
+    bool  SetGpioValue(const std::string& name, bool value) ;
 
-  bool  GetGpioValue(const std::string& name, bool* value) ;
-  Status GetGpioPollingFd(const std::string& name,
-                          void* fd) ;
-  bool  getDirection(const std::string& name,
-          std::string& direction) ;
+    bool  GetGpioValue(const std::string& name, bool* value) ;
+    int  GetGpioPollingFd(const std::string& name,
+            int* fd) ;
+    bool  getDirection(const std::string& name,
+            std::string& direction) ;
+    // Spi functions.
+    Status ListSpiBuses(std::vector<std::string>* buses) ;
 
-//Uart functions
-  Status ListUartDevices(std::vector<std::string>* devices);
+    Status OpenSpiDevice(const std::string& name) ;
 
-  Status OpenUartDevice(const std::string& name);
+    Status ReleaseSpiDevice(const std::string& name) ;
 
-  bool ReleaseUartDevice(const std::string& name);
+    Status SpiDeviceWriteByte(const std::string& name,
+            int8_t byte) ;
 
-  bool SetUartDeviceBaudrate(const std::string& name,
-                               int32_t baudrate);
+    Status SpiDeviceWriteBuffer(
+            const std::string& name,
+            const std::vector<uint8_t>& buffer) ;
 
-  bool UartDeviceWrite(const std::string& name,
-                         const std::vector<uint8_t>& data,
-                         int* bytes_written);
+    Status SpiDeviceTransfer(
+            const std::string& name,
+            std::vector<uint8_t>& tx_data,
+            std::vector<uint8_t>* rx_data,
+            int size);
 
-  bool UartDeviceRead(const std::string& name,
-                        std::vector<uint8_t>* data,
-                        int size,
-                        int* bytes_read);
-  bool getBaudrate(const std::string& name,
-                               int32_t baudrate);
+    Status SpiDeviceSetMode(const std::string& name, int mode) ;
 
+    Status SpiDeviceSetFrequency(const std::string& name,
+            int frequency_hz) ;
 
- private:
-  std::map<std::string, std::unique_ptr<GpioPin>> gpios_;
-  std::map<std::string, std::unique_ptr<UartDevice>> uart_devices_;
+    Status SpiDeviceSetBitJustification(const std::string& name,
+            bool lsb_first) ;
+
+    Status SpiDeviceSetBitsPerWord(const std::string& name,
+            int nbits) ;
+
+    Status SpiDeviceSetDelay(const std::string& name,
+            int delay_usecs) ;
+    // I2c functions.
+    Status ListI2cBuses(std::vector<std::string>* buses) ;
+
+    Status OpenI2cDevice(const std::string& name,
+            int32_t address) ;
+
+    Status ReleaseI2cDevice(const std::string& name,
+            int32_t address) ;
+
+    Status I2cRead(const std::string& name,
+            int32_t address,
+            std::vector<uint8_t>* data,
+            int32_t size,
+            int32_t* bytes_read) ;
+
+    Status I2cReadRegByte(const std::string& name,
+            int32_t address,
+            int32_t reg,
+            int32_t* val) ;
+
+    Status I2cReadRegWord(const std::string& name,
+            int32_t address,
+            int32_t reg,
+            int32_t* val) ;
+
+    Status I2cReadRegBuffer(const std::string& name,
+            int32_t address,
+            int32_t reg,
+            std::vector<uint8_t>* data,
+            int32_t size,
+            int32_t* bytes_read) ;
+
+    Status I2cWrite(const std::string& name,
+            int32_t address,
+            const std::vector<uint8_t>& data,
+            int32_t* bytes_written) ;
+
+    Status I2cWriteRegByte(const std::string& name,
+            int32_t address,
+            int32_t reg,
+            int8_t val) ;
+
+    Status I2cWriteRegWord(const std::string& name,
+            int32_t address,
+            int32_t reg,
+            int32_t val) ;
+
+    Status I2cWriteRegBuffer(const std::string& name,
+            int32_t address,
+            int32_t reg,
+            const std::vector<uint8_t>& data,
+            int32_t* bytes_written) ;
+    int Geti2cPollingFd(const std::string& name,
+            int32_t address,
+            int* fd);
+
+    // Uart functions.
+    Status ListUartDevices(std::vector<DevicesPinInfo>& devices);
+
+    Status OpenUartDevice(const std::string& name);
+
+    bool ReleaseUartDevice(const std::string& name);
+
+    bool SetUartDeviceBaudrate(const std::string& name,
+            int32_t baudrate);
+
+    bool UartDeviceWrite(const std::string& name,
+            const std::vector<uint8_t>& data,
+            int* bytes_written);
+
+    bool UartDeviceRead(const std::string& name,
+            std::vector<uint8_t>* data,
+            int size,
+            int* bytes_read);
+    int32_t getBaudrate(const std::string& name,
+            uint32_t* baudrate);
+    int  GetuartPollingFd(const std::string& name,
+            int* fd) ;
+
+private:
+    std::map<std::string, std::unique_ptr<GpioPin>> gpios_;
+    std::map<std::pair<std::string, uint32_t>, std::unique_ptr<I2cDevice>>
+    i2c_devices_;
+    std::map<std::string, std::unique_ptr<SpiDevice>> spi_devices_;
+    std::map<std::string, std::unique_ptr<UartDevice>> uart_devices_;
 };
 
 class test {

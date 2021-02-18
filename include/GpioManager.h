@@ -25,72 +25,72 @@
 #include <vector>
 #include "GpioDriver.h"
 #include "Logger.h"
+#include "PinmuxManager.h"
 
 struct GpioPinSysfs {
-  uint32_t index;
-  std::string mux;
-  std::unique_ptr<GpioDriverInterface> driver_;
+    uint32_t index;
+    std::string mux;
+    std::unique_ptr<GpioDriverInterface> driver_;
 };
 
 class GpioPin {
- public:
-  // TODO(leecam): pins should have a generic device
-  // reference, not a sysfs one.
-  explicit GpioPin(GpioPinSysfs* pin) : pin_(pin) {}
-  ~GpioPin() {
-    if (!pin_->mux.empty()) {
+public:
+    explicit GpioPin(GpioPinSysfs* pin) : pin_(pin) {}
+    ~GpioPin() {
+        if (!pin_->mux.empty()) {
+            PinMuxManager::GetPinMuxManager()->ReleaseGpio(pin_->mux);
+        }
+        pin_->driver_.reset();
     }
-    pin_->driver_.reset();
-  }
 
-  bool SetValue(bool val) { return pin_->driver_->SetValue(val); }
+    bool SetValue(bool val) { return pin_->driver_->SetValue(val); }
 
-  bool GetValue(bool* val) { return pin_->driver_->GetValue(val); }
+    bool GetValue(bool* val) { return pin_->driver_->GetValue(val); }
 
-  bool SetDirection(GpioDirection direction) {
-    if (!pin_->mux.empty()) {
-      bool dir = true;
-      if (direction == kDirectionIn)
-        dir = false;
+    bool SetDirection(GpioDirection direction) {
+        if (!pin_->mux.empty()) {
+            bool dir = true;
+            if (direction == kDirectionIn)
+                dir = false;
+        }
+        return pin_->driver_->SetDirection(direction);
     }
-    return pin_->driver_->SetDirection(direction);
-  }
-  bool getDirection(std::string&  direction) { return pin_->driver_->getDirection(direction);}
-  bool GetPollingFd(void* fd) {
-    return pin_->driver_->GetPollingFd(fd);
-  }
+    bool getDirection(std::string&  direction) { return pin_->driver_->getDirection(direction);}
+    bool GetPollingFd(int* fd) {
+        return pin_->driver_->GetPollingFd(fd);
+    }
 
- private:
-  GpioPinSysfs* pin_;
+private:
+    GpioPinSysfs* pin_;
 };
 
 class GpioManager {
- public:
-  friend class GpioManagerTest;
-  ~GpioManager();
+public:
+    friend class GpioManagerTest;
+    ~GpioManager();
 
-  // Get the singleton.
-  static GpioManager* GetGpioManager();
+    // Get the singleton.
+    static GpioManager* GetGpioManager();
 
-  // Delete the GpioManager (used for test);
-  static void ResetGpioManager();
+    // Delete the GpioManager (used for test);
+    static void ResetGpioManager();
 
-  // Used by the BSP to tell PMan of an GPIO Pin.
-  bool RegisterGpioSysfs(const std::string& name, uint32_t index);
-  bool SetPinMux(const std::string& name, const std::string& mux);
+    // Used by the BSP to tell PMan of an GPIO Pin.
+    bool RegisterGpioSysfs(const std::string& name, uint32_t index);
+    bool SetPinMux(const std::string& name, const std::string& mux);
 
-  // Query for available pins.
-  std::vector<std::string> GetGpioPins();
-  bool HasGpio(const std::string& pin_name);
+    // Query for available pins.
+    std::vector<std::string> GetGpioPins();
+    bool HasGpio(const std::string& pin_name);
 
-  bool RegisterDriver(std::unique_ptr<GpioDriverInfoBase> driver_info);
+    bool RegisterDriver(std::unique_ptr<GpioDriverInfoBase> driver_info);
 
-  std::unique_ptr<GpioPin> OpenGpioPin(const std::string& name);
+    std::unique_ptr<GpioPin> OpenGpioPin(const std::string& name);
 
- private:
-  GpioManager();
+private:
+    GpioManager();
 
-  std::map<std::string, std::unique_ptr<GpioDriverInfoBase>> driver_infos_;
-  std::map<std::string, GpioPinSysfs> sysfs_pins_;
+    std::map<std::string, std::unique_ptr<GpioDriverInfoBase>> driver_infos_;
+    std::map<std::string, GpioPinSysfs> sysfs_pins_;
 
 };

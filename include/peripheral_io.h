@@ -187,18 +187,6 @@ typedef struct peripheral_registration_cb_t {
   int (*set_spi_pin_mux)(const char* name, const char* source);
 
   /**
-   * Register a sysfs-backed LED.
-   *
-   * Args:
-   *  name: Friendly name of the LED.
-   *  sysfs_name: Name of the device in sysfs.
-   *
-   * Returns:
-   *  0 on success, errno on error.
-   */
-  int (*register_led_sysfs)(const char* name, const char* sysfs_name);
-
-  /**
    * Register a UART bus.
    *
    * Args:
@@ -266,3 +254,5 @@ struct peripheral_io_module_t {
                           const peripheral_registration_cb_t* callbacks);
 };
 
+int register_devices(const peripheral_io_module_t* dev,
+                         const peripheral_registration_cb_t* callbacks);

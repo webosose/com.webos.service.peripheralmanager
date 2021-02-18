@@ -23,6 +23,11 @@ add_executable(${CMAKE_PROJECT_NAME} Main.cpp
                 UartManager.cpp
                 UartDriverSysfs.cpp
                 CharDevice.cpp
+                I2cDriverI2cdev.cpp
+                I2cManager.cpp
+                SpiDriverSpidev.cpp
+                SpiManager.cpp
+                HAL.cpp
                 )
 
 target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC ${GLIB2_CFLAGS_OTHER})
