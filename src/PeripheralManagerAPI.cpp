@@ -1239,7 +1239,7 @@ bool PeripheralManagerService::I2cRead(LSMessage &ls_message) {
         bool extra_property = false;
         for(auto ii:parsed)
         {
-            if(ii.first.asString() == "name" || ii.first.asString() == "address")
+            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "size" )
             {
                 continue;
             }
@@ -1261,12 +1261,12 @@ bool PeripheralManagerService::I2cRead(LSMessage &ls_message) {
                 const std::string name = parsed["name"].asString();
                 int address = parsed["address"].asNumber<int>();
                 std::vector<uint8_t> data;
-                int size = 255;
+                int size = parsed["size"].asNumber<int>();
+                size =  size ? size : 8;
                 data.resize(size);
                 int bytes_read = 0;
                 peripheral_manager_client->I2cRead(name, address, &data, size, &bytes_read);
-                int n = data.size();
-                for(int i = 0; i < n; i++) {
+                for(int i = 0; i < bytes_read; i++) {
                     data_array << data[i];
                 }
                 response_json =
@@ -1438,7 +1438,7 @@ bool PeripheralManagerService::I2cReadRegBuffer(LSMessage &ls_message) {
         bool extra_property = false;
         for(auto ii:parsed)
         {
-            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "reg" )
+            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "reg" || ii.first.asString() == "size" )
             {
                 continue;
             }
@@ -1462,10 +1462,10 @@ bool PeripheralManagerService::I2cReadRegBuffer(LSMessage &ls_message) {
                 int32_t reg = parsed["reg"].asNumber<int>();
                 std::vector<uint8_t> data;
                 int32_t size = parsed["size"].asNumber<int>();
+                size = size ? size : 8;
                 int32_t bytes_read = 0;
                 peripheral_manager_client->I2cReadRegBuffer(name, address, reg, &data, size, &bytes_read);
-                int n = data.size();
-                for (int i = 0; i < n; i++)
+                for (int i = 0; i < bytes_read ; i++)
                 {
                     data_array <<  data[i];
                 }
@@ -1509,7 +1509,7 @@ bool PeripheralManagerService::I2cWrite(LSMessage &ls_message) {
         bool extra_property = false;
         for(auto ii:parsed)
         {
-            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "data" || ii.first.asString() == "size" )
+            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "data" )
             {
                 continue;
             }
@@ -1525,13 +1525,11 @@ bool PeripheralManagerService::I2cWrite(LSMessage &ls_message) {
             request.respond(response_json.stringify().c_str());
             return true;
         }
-        if (parsed.hasKey("name") && parsed.hasKey("address") && parsed.hasKey("data") && parsed.hasKey("size"))
+        if (parsed.hasKey("name") && parsed.hasKey("address") && parsed.hasKey("data"))
         {
             try {
                 const std::string name = parsed["name"].asString();
                 int32_t address  = parsed["address"].asNumber<int>();
-                int32_t size = parsed["size"].asNumber<int>();
-
                 pbnjson::JValue jsonData = parsed["data"];
                 int jsonDataSize = jsonData.arraySize();
                 std::vector<uint8_t> data;
@@ -1558,7 +1556,7 @@ bool PeripheralManagerService::I2cWrite(LSMessage &ls_message) {
             request.respond(response_json.stringify().c_str());
         }
         else {
-            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/address/data/size  is missing"}};
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/address/data  is missing"}};
             request.respond(response_json.stringify().c_str());
             return true;
         }
@@ -1709,7 +1707,7 @@ bool PeripheralManagerService::I2cWriteRegBuffer(LSMessage &ls_message) {
         bool extra_property = false;
         for(auto ii:parsed)
         {
-            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "reg"  || ii.first.asString() == "data" || ii.first.asString() == "size")
+            if(ii.first.asString() == "name" || ii.first.asString() == "address" || ii.first.asString() == "reg"  || ii.first.asString() == "data" )
             {
                 continue;
             }
@@ -1725,13 +1723,13 @@ bool PeripheralManagerService::I2cWriteRegBuffer(LSMessage &ls_message) {
             request.respond(response_json.stringify().c_str());
             return true;
         }
-        if (parsed.hasKey("name") && parsed.hasKey("address") && parsed.hasKey("reg") && parsed.hasKey("data")&& parsed.hasKey("size"))
+        if (parsed.hasKey("name") && parsed.hasKey("address") && parsed.hasKey("reg") && parsed.hasKey("data"))
         {
             try {
+                int32_t bytes_written = 0;
                 const std::string name = parsed["name"].asString();
                 int32_t address = parsed["address"].asNumber<int>();
                 int32_t reg = parsed["reg"].asNumber<int>();
-
                 pbnjson::JValue jsonData = parsed["data"];
                 int jsonDataSize = jsonData.arraySize();
                 std::vector<uint8_t> data;
@@ -1740,8 +1738,6 @@ bool PeripheralManagerService::I2cWriteRegBuffer(LSMessage &ls_message) {
                     data.push_back(dataTemp);
                 }
 
-                int32_t size = parsed["size"].asNumber<int>();
-                int32_t bytes_written = 0;
                 peripheral_manager_client->I2cWriteRegBuffer(name, address, reg, data, &bytes_written);
                 response_json =
                         pbnjson::JObject{
@@ -1759,7 +1755,7 @@ bool PeripheralManagerService::I2cWriteRegBuffer(LSMessage &ls_message) {
             request.respond(response_json.stringify().c_str());
         }
         else {
-            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/address/data/reg/size  is missing"}};
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/address/data/reg  is missing"}};
             request.respond(response_json.stringify().c_str());
             return true;
         }
@@ -2225,9 +2221,21 @@ bool PeripheralManagerService::SpiDeviceTransfer(LSMessage &ls_message) {
             recv_data.resize(size);
             try {
                 peripheral_manager_client->SpiDeviceTransfer(name,data,&recv_data,size);
+
+                int tx_size = data.size();
+                int rx_size = recv_data.size();
+                pbnjson::JValue data_array = pbnjson::JArray();
+                for (int i = 0; i < recv_data.size() ; i++)
+                {
+                    data_array <<  data[i];
+                }
+
                 response_json =
                         pbnjson::JObject{
-                    {"returnValue" , true}
+                    {"returnValue" , true},
+                    {"tx_size" , tx_size},
+                    {"rx_size" , rx_size},
+                    {"rx_data" , data_array}
                 };
             }
             catch (LS::Error &err) {
@@ -2240,7 +2248,7 @@ bool PeripheralManagerService::SpiDeviceTransfer(LSMessage &ls_message) {
             request.respond(response_json.stringify().c_str());
         }
         else {
-            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/size/data is missing"}};
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "name/size is missing"}};
             request.respond(response_json.stringify().c_str());
             return true;
         }
@@ -2322,7 +2330,7 @@ bool PeripheralManagerService::SpiDeviceWriteBuffer(LSMessage &ls_message) {
         bool extra_property = false;
         for(auto ii:parsed)
         {
-            if(ii.first.asString() == "name" || ii.first.asString() == "data" || ii.first.asString() == "size")
+            if(ii.first.asString() == "name" || ii.first.asString() == "data")
             {
                 continue;
             }
@@ -2338,10 +2346,9 @@ bool PeripheralManagerService::SpiDeviceWriteBuffer(LSMessage &ls_message) {
             request.respond(response_json.stringify().c_str());
             return true;
         }
-        if (parsed.hasKey("name") && parsed.hasKey("data") && parsed.hasKey("size"))
+        if (parsed.hasKey("name") && parsed.hasKey("data"))
         {
             std::string name = parsed["name"].asString();
-            int size = parsed[ "size"].asNumber<int>();
 
             pbnjson::JValue jsonData = parsed["data"];
             int jsonDataSize = jsonData.arraySize();
@@ -2353,10 +2360,11 @@ bool PeripheralManagerService::SpiDeviceWriteBuffer(LSMessage &ls_message) {
 
             try {
                 peripheral_manager_client->SpiDeviceWriteBuffer(name,data);
+                int size  = data.size();
                 response_json =
                         pbnjson::JObject{
                     {"returnValue", true},
-                    {"size",size}
+                    {"size", size}
                 };
             }
             catch (LS::Error &err) {
