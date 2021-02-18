@@ -977,7 +977,59 @@ bool PeripheralManagerService::getDirection(LSMessage &ls_message) {
     return true;
 }
 
+bool PeripheralManagerService::GetuartPollingFd(LSMessage &ls_message) {
+    LS::Message request(&ls_message);
+    int fd  ;
+    pbnjson::JValue response_json;
+    pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
+    if (parsed.isError()) {
+        response_json =
+                pbnjson::JObject{{"returnValue", false}, {"errorText", "Failed to parse params"}, {"errorCode", 1}};
+        request.respond(response_json.stringify().c_str());
+        return false;
+    }
+    else {
+        std::string id = parsed["id"].asString();
+        std::string temp;
+        bool extra_property = false;
+        for(auto ii:parsed)
+        {
+            if(ii.first.asString() == "id")
+            {
+                continue;
+            }
+            else
+            {
+                extra_property = true;
+                temp = ii.first.asString();
+                response_json = pbnjson::JObject{{"returnValue", false},{"errorText", temp+ " property not allowed"}};
+            }
+        }
+        if(extra_property == true)
+        {
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+        if (parsed.hasKey("id"))
+        {
+            peripheral_manager_client->GetuartPollingFd(id, &fd);
+            response_json =
+                    pbnjson::JObject{
+                {"returnValue", true},
+                {"fd", fd}
+            };
 
+            request.respond(response_json.stringify().c_str());
+
+        }
+        else {
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "id is missing"}};
+            request.respond(response_json.stringify().c_str());
+            return true;
+        }
+    }
+    return true;
+}
 
 // Private Methods
 void PeripheralManagerService::registerMethodsToLsHub() {
@@ -1024,4 +1076,5 @@ void PeripheralManagerService::registerMethodsToLsHub() {
 
     luna_handle->registerCategory("/uart", uart, nullptr, nullptr);
     luna_handle->setCategoryData("/uart", this);
+
 }
