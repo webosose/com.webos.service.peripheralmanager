@@ -122,7 +122,7 @@ bool GpioDriverSysfs::getDirection(std::string& direction) {
     if (!ReadFromFileDirection(kDirection, &read_direction))
         return false;
 
-    if (read_direction.size() < 0)
+    if (read_direction.empty())
         return false;
 
     direction = read_direction;
