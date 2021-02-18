@@ -26,7 +26,7 @@
 const char kSpiDevPath[] = "/dev/spidev";
 
 SpiDriverSpiDev::SpiDriverSpiDev(CharDeviceFactory* char_device_factory)
-: fd_(-1), char_device_factory_(char_device_factory) {}
+: fd_(-1), char_device_factory_(char_device_factory), bits_per_word_(8), delay_usecs_(0), speed_hz_(9600) {}
 
 SpiDriverSpiDev::~SpiDriverSpiDev() {
     if (fd_ >= 0 && char_interface_ != nullptr) {
