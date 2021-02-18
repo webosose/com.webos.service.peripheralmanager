@@ -32,7 +32,9 @@ PeripheralManagerService::PeripheralManagerService(LS::Handle *ls_handle)
     luna_handle->attachToLoop(main_loop_ptr.get());
 }
 
-PeripheralManagerService::~PeripheralManagerService() {}
+PeripheralManagerService::~PeripheralManagerService() {
+    delete peripheral_manager_client;
+}
 
 void PeripheralManagerService::run() {
     // attach to main loop and start running
