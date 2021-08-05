@@ -81,11 +81,12 @@ bool PeripheralManagerService::ListGpio(LSMessage &ls_message) {
             return true;
         }
         else {
+            try {
             std::vector<DevicesPinInfo> gpios;
             peripheral_manager_client->ListGpio(gpios);
             pbnjson::JValue gpioList = pbnjson::JArray();
             for (auto gpio : gpios) {
-                pbnjson::JValue gpioJson  = pbnjson::JObject{{"name", gpio.name},{"status", gpio.status}};
+                pbnjson::JValue gpioJson  = pbnjson::JObject{{"pin", gpio.name},{"status", gpio.status}};
                 gpioList << gpioJson;
             }
             subscription = parsed["subscribe"].asBool();
@@ -94,7 +95,14 @@ bool PeripheralManagerService::ListGpio(LSMessage &ls_message) {
                 {"returnValue", true},
                 {"subscribed", subscription},
                 {"gpioList", gpioList}};
-
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
             request.respond(response_json.stringify().c_str());
         }
     }
@@ -906,13 +914,21 @@ bool PeripheralManagerService::getBaudrate(LSMessage &ls_message) {
         }
         if (parsed.hasKey("interfaceId"))
         {
+            try {
             ret = peripheral_manager_client->getBaudrate(interfaceId, &baudrate);
             response_json =
                     pbnjson::JObject{
                 {"returnValue", true},
                 {"baudrate", (int)baudrate}
             };
-
+            }
+            catch (LS::Error &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
+            } catch (PeripheralManagerException &err) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorCode", err.getErrorCode()}, {"errorText", error_text.at(err.getErrorCode())}};
+            } catch (...) {
+                response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "Unknown Error"}};
+            }
             request.respond(response_json.stringify().c_str());
         }
         else{

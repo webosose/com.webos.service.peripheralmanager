@@ -4,6 +4,6 @@
         "peripheralmanager.gpio.operation" : ["oem"],
         "peripheralmanager.uart.operation" : ["oem"],
         "peripheralmanager.spi.operation" : ["oem"],
-        "peripheralmanager.i2ct.operation" : ["oem"]
+        "peripheralmanager.i2c.operation" : ["oem"]
 
 }
