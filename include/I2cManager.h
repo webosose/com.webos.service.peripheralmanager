@@ -23,8 +23,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <pbnjson.hpp>
 #include "Logger.h"
-
 #include "I2cDriver.h"
 #include "Constants.h"
 #include "PinmuxManager.h"
@@ -109,7 +109,7 @@ public:
 
     bool RegisterI2cDevBus(const std::string& name, uint32_t bus);
 
-    std::vector<std::string> GetI2cDevBuses();
+    bool GetI2cDevBuses(pbnjson::JValue& list, bool verbose);
     bool HasI2cDevBus(const std::string& name);
 
     bool SetPinMux(const std::string& name, const std::string& mux);

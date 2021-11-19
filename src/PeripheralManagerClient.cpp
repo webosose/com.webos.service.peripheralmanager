@@ -25,6 +25,7 @@
 #include <functional>
 #include <string>
 #include <bits/stdc++.h>
+#include <pbnjson.hpp>
 #include "PeripheralManagerClient.h"
 #include "PeripheralManagerException.h"
 #define ROW 4
@@ -304,8 +305,10 @@ Status PeripheralManagerClient::SpiDeviceSetDelay(const std::string& name,
     return;
 }
 
-Status PeripheralManagerClient::ListI2cBuses(std::vector<std::string>* buses) {
-    *buses = I2cManager::GetI2cManager()->GetI2cDevBuses();
+Status PeripheralManagerClient::ListI2cBuses(pbnjson::JValue& list,
+        bool verbose) {
+
+    I2cManager::GetI2cManager()->GetI2cDevBuses(list, verbose);
     return;
 }
 
@@ -511,12 +514,12 @@ Status PeripheralManagerClient::ListUartDevices(
     return;
 }
 
-Status PeripheralManagerClient::OpenUartDevice(const std::string& name) {
+Status PeripheralManagerClient::OpenUartDevice(const std::string& name, bool canonical) {
     if (!UartManager::GetManager()->HasUartDevice(name)) {
         throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kENODEV);
     }
 
-    auto uart_device = UartManager::GetManager()->OpenUartDevice(name);
+    auto uart_device = UartManager::GetManager()->OpenUartDevice(name, canonical);
     if (!uart_device) {
         AppLogError() << "Failed to open UART device " << name;
         throw PeripheralManagerException(std::string(" "), PeripheralManagerErrors::kEBUSY);

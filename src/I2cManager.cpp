@@ -44,11 +44,57 @@ bool I2cManager::RegisterI2cDevBus(const std::string& name,
     return true;
 }
 
-std::vector<std::string> I2cManager::GetI2cDevBuses() {
-    std::vector<std::string> buses;
-    for (auto& i : i2cdev_buses_)
-        buses.push_back(i.first);
-    return buses;
+bool I2cManager::GetI2cDevBuses(pbnjson::JValue& list, bool verbose) {
+    FILE *fp;
+    char result[1024];
+    pbnjson::JValue i2cInterfaceList = pbnjson::JArray();;
+
+    for (auto& i : i2cdev_buses_) {
+        if(verbose) {
+            pbnjson::JValue i2cInterface = pbnjson::Object();
+            pbnjson::JValue slave_list = pbnjson::JArray();
+
+            i2cInterface.put("name", i.first);
+            std::string command = "i2cdetect -y " + std::to_string(i.second.bus);
+
+            fp = popen(command.c_str(), "r");
+            if (fp == NULL) {
+                AppLogError() << "failed to open port";
+                continue;
+            }
+
+            memset(result, 0, sizeof(result));
+            fgets(result, sizeof(result), fp);
+
+            while (fgets(result, sizeof(result), fp) != NULL)
+            {
+                char *tmp = &result[0]+4;
+                const char s[2] = " ";
+                char *token;
+
+                token = strtok(tmp, s);
+                while( token != NULL ) {
+                    int ret = strncmp(token, "--", 2);
+                    if(ret > 0) {
+                        int val = strtoul(token, NULL, 16);
+                        slave_list << val;
+                    }
+                    token = strtok(NULL, s);
+                }
+                memset(result, 0, sizeof(result));
+            }
+
+            i2cInterface.put("slaveAddress", slave_list);
+            i2cInterfaceList << i2cInterface;
+            pclose(fp);
+        }
+        else{
+            i2cInterfaceList << i.first;
+        }
+    }
+
+    list = i2cInterfaceList;
+    return true;
 }
 
 bool I2cManager::HasI2cDevBus(const std::string& name) {

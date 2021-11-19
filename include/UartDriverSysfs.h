@@ -28,7 +28,7 @@ public:
 
     static std::string Compat() { return "UARTSYSFS"; }
 
-    bool Init(const std::string& name) override;
+    bool Init(const std::string& name, bool canonical = false) override;
 
     int SetBaudrate(uint32_t baudrate) override;
     uint32_t getBaudrate(uint32_t* baudrate) override;

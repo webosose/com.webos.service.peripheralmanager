@@ -92,7 +92,8 @@ public:
     Status SpiDeviceSetDelay(const std::string& name,
             int delay_usecs) ;
     // I2c functions.
-    Status ListI2cBuses(std::vector<std::string>* buses) ;
+    Status ListI2cBuses(pbnjson::JValue& list,
+            bool verbose) ;
 
     Status OpenI2cDevice(const std::string& name,
             int32_t address) ;
@@ -150,7 +151,7 @@ public:
     // Uart functions.
     Status ListUartDevices(std::vector<DevicesPinInfo>& devices);
 
-    Status OpenUartDevice(const std::string& name);
+    Status OpenUartDevice(const std::string& name, bool canonical = false);
 
     bool ReleaseUartDevice(const std::string& name);
 

@@ -14,6 +14,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <iostream>
+#include <stdio.h>
+#include <string.h>
+#include <fstream>
+#include <algorithm>
+#include <regex>
+
 #include "UartManager.h"
 #include "UartDriverSysfs.h"
 
@@ -65,7 +72,43 @@ bool UartManager::SetPinMux(const std::string& name,
 }
 
 std::vector<std::string> UartManager::GetDevicesList() {
+
     std::vector<std::string> list;
+    FILE *fp;
+    char result[1024];
+    char *str = NULL;
+
+    std::string command = "ls /dev/ttyACM* /dev/ttyUSB*";
+    fp = popen(command.c_str(), "r");
+
+    if (fp == NULL) {
+        AppLogError() << "failed to open port";
+        return list;
+    }
+
+    memset(result, 0, sizeof(result));
+
+    while (fgets(result, sizeof(result), fp) != NULL)
+    {
+        std::regex newlines_re("\n+");
+        auto result1 = std::regex_replace(result, newlines_re, "");
+
+        str = strstr(const_cast<char*>(result1.c_str()), "ttyACM");
+        if(str != NULL) {
+            RegisterUartDevice(str, result1.c_str());
+            SetPinMux(str,str);
+        }
+
+        str = strstr(const_cast<char*>(result1.c_str()), "ttyUSB");
+        if(str != NULL) {
+            RegisterUartDevice(str, result1.c_str());
+            SetPinMux(str,str);
+        }
+
+        memset(result, 0, sizeof(result));
+    }
+    pclose(fp);
+
     for (const auto& it : uart_devices_) {
         list.push_back(it.first);
     }
@@ -77,7 +120,8 @@ bool UartManager::HasUartDevice(const std::string& name) {
 }
 
 std::unique_ptr<UartDevice> UartManager::OpenUartDevice(
-        const std::string& name) {
+        const std::string& name,
+        bool canonical) {
     // Get the Bus from the BSP.
     auto bus_it = uart_devices_.find(name);
     if (bus_it == uart_devices_.end()) {
@@ -99,7 +143,7 @@ std::unique_ptr<UartDevice> UartManager::OpenUartDevice(
     }
 
     std::unique_ptr<UartDriverInterface> driver(driver_info_it->second->Probe());
-    if (!driver->Init(bus_it->second.path)) {
+    if (!driver->Init(bus_it->second.path, canonical)) {
         AppLogError() << __func__ << ":" << __LINE__ ;
         return nullptr;
     }
