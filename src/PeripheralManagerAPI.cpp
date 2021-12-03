@@ -16,7 +16,12 @@
 
 #include "Logger.h"
 #include <unistd.h>
+#include <string>
+#include <locale>
 #include <stdio.h>
+#include <algorithm>
+#include <iostream>
+#include <iterator>
 #include <regex>
 #include <stdlib.h>
 #include <time.h>
@@ -529,13 +534,12 @@ bool PeripheralManagerService::ListUartDevices(LSMessage &ls_message) {
                 peripheral_manager_client->ListUartDevices(devices);
                 pbnjson::JValue device_list = pbnjson::JArray();
                 for (auto device : devices) {
-                    pbnjson::JValue uartJson  = pbnjson::JObject{{"name", device.name},{"status", device.status}};
+                    pbnjson::JValue uartJson  = pbnjson::JObject{{"interfaceId", device.name},{"status", device.status}};
                     device_list << uartJson;
                 }
                 response_json =
                         pbnjson::JObject{
                     {"returnValue", true},
-                    {"subscribed", subscription},
                     {"uartList", device_list}
                 };
             }
@@ -567,7 +571,7 @@ bool PeripheralManagerService::OpenUartDevice(LSMessage &ls_message) {
         bool extra_property = false;
         for(auto ii:parsed)
         {
-            if(ii.first.asString() == "interfaceId")
+            if(ii.first.asString() == "interfaceId" || ii.first.asString() == "config" )
             {
                 continue;
             }
@@ -586,8 +590,13 @@ bool PeripheralManagerService::OpenUartDevice(LSMessage &ls_message) {
         if (parsed.hasKey("interfaceId"))
         {
             const std::string interfaceId = parsed["interfaceId"].asString();
+            bool canonical = false;
+            if(parsed.hasKey("config"))
+            {
+                canonical = parsed["config"]["canonical"].asBool();
+            }
             try {
-                peripheral_manager_client->OpenUartDevice(interfaceId);
+                peripheral_manager_client->OpenUartDevice(interfaceId, canonical);
                 response_json =
                         pbnjson::JObject{
                     {"returnValue", true}
@@ -769,14 +778,25 @@ bool PeripheralManagerService::UartDeviceWrite(LSMessage &ls_message) {
         {
             const std::string interfaceId = parsed["interfaceId"].asString();
 
-            pbnjson::JValue jsonData = parsed["data"];
             std::string dataType = parsed["dataType"].asString();
             int size = parsed["size"].asNumber<int>();
-            int jsonDataSize = jsonData.arraySize();
             std::vector<uint8_t> data;
-            for (int i = 0; i < jsonDataSize; i++) {
-                uint8_t dataTemp = jsonData[i].asNumber<int>();
-                data.push_back(dataTemp);
+
+            if(dataType == "text") {
+                std::string strData = parsed["data"].asString();
+                const char * cptr = strData.data();
+                int size = strData.size();
+                for(int i = 0; i < size; i++) {
+                    data.push_back(cptr[i]);
+                }
+            }
+            else {
+                pbnjson::JValue jsonData = parsed["data"];
+                int jsonDataSize = jsonData.arraySize();
+                for (int i = 0; i < jsonDataSize; i++) {
+                    uint8_t dataTemp = jsonData[i].asNumber<int>();
+                    data.push_back(dataTemp);
+                }
             }
 
             int bytes_written = 0;
@@ -823,7 +843,7 @@ bool PeripheralManagerService::UartDeviceRead(LSMessage &ls_message) {
         bool extra_property = false;
         for(auto ii:parsed)
         {
-            if(ii.first.asString() == "size" || ii.first.asString() == "interfaceId")
+            if(ii.first.asString() == "size" || ii.first.asString() == "interfaceId" || ii.first.asString() == "dataType")
             {
                 continue;
             }
@@ -839,29 +859,54 @@ bool PeripheralManagerService::UartDeviceRead(LSMessage &ls_message) {
             request.respond(response_json.stringify().c_str());
             return true;
         }
-        if (parsed.hasKey("interfaceId") && parsed.hasKey("size"))
+        if (parsed.hasKey("interfaceId"))
         {
             const std::string interfaceId = parsed["interfaceId"].asString();
-            int size = parsed["size"].asNumber<int>();
+            int size = 1024;
+            if (parsed.hasKey("size"))
+            {
+                size = parsed["size"].asNumber<int>();
+            }
+            std::string dataType = "byte";
+            if (parsed.hasKey("dataType"))
+            {
+                if(parsed["dataType"].asString() == "text")
+                    dataType = "text";
+            }
+
             std::vector<uint8_t> data;
             data.resize(size);
-            std::string datatype;
-            int bytes_read = 0;
+            int bytes_read = data.size();
+
             try {
                 ret = peripheral_manager_client->UartDeviceRead(interfaceId, &data, data.size(), &bytes_read);
-                pbnjson::JValue data_array = pbnjson::JArray();
-                for(int i = 0; i < bytes_read; i++) {
-                    data_array << data[i];
 
-                }
-                response_json =
-                        pbnjson::JObject{
+                response_json = pbnjson::JObject {
                     {"returnValue", true},
-                    {"bytes_read", bytes_read},
-                    {"data", data_array},
-                    {"dataType", datatype}
+                    {"dataType", dataType}
                 };
+
+                if(dataType == "text") {
+                    std::string data_str;
+                    std::locale loc;
+                    for(int i = 0; i < bytes_read; i++) {
+                        int check = isprint(data[i]);
+                        if(check > 0)
+                            data_str.push_back(data[i]);
+                    }
+                    response_json.put("data", data_str);
+                }
+                else {
+                    pbnjson::JValue data_array = pbnjson::JArray();
+                    for(int i = 0; i < bytes_read; i++) {
+                        data_array << data[i];
+                    }
+
+                    response_json.put("data", data_array);
+                    response_json.put("bytes_read", bytes_read);
+                }
             }
+
             catch (LS::Error &err) {
                 response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", err.what()}};
             } catch (PeripheralManagerException &err) {
@@ -872,7 +917,7 @@ bool PeripheralManagerService::UartDeviceRead(LSMessage &ls_message) {
             request.respond(response_json.stringify().c_str());
         }
         else {
-            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "interfaceId/size is missing"}};
+            response_json = pbnjson::JObject{{"returnValue", false}, {"errorText", "interfaceId is missing"}};
             request.respond(response_json.stringify().c_str());
             return true;
         }
@@ -1067,6 +1112,8 @@ bool PeripheralManagerService::ListI2cBuses(LSMessage &ls_message) {
     LS::Message request(&ls_message);
     pbnjson::JValue response_json;
     bool ret = false;
+    bool verbose = false;
+
     pbnjson::JValue parsed = pbnjson::JDomParser::fromString(request.getPayload());
     if (parsed.isError()) {
         response_json =
@@ -1078,7 +1125,7 @@ bool PeripheralManagerService::ListI2cBuses(LSMessage &ls_message) {
         bool extra_property = false;
         for(auto ii:parsed)
         {
-            if(ii.first.asString() == "subscribe")
+            if(ii.first.asString() == "subscribe" || ii.first.asString() == "verbose")
             {
                 continue;
             }
@@ -1096,16 +1143,13 @@ bool PeripheralManagerService::ListI2cBuses(LSMessage &ls_message) {
         }
         else{
             try {
-                std::vector<std::string> buses;
-                peripheral_manager_client->ListI2cBuses(&buses);
-                pbnjson::JValue device_list = pbnjson::JArray();
-                for (std::string device : buses) {
-                    device_list << device;
-                }
+                verbose = parsed["verbose"].asBool();
+                pbnjson::JValue list = pbnjson::JArray();
+                peripheral_manager_client->ListI2cBuses(list, verbose);
                 response_json =
                         pbnjson::JObject{
                     {"returnValue", true},
-                    {"i2cBusList", device_list}
+                    {"i2cBusList", list}
                 };
             }
             catch (LS::Error &err) {

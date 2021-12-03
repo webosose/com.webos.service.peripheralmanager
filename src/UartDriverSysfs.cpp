@@ -24,12 +24,13 @@
 
 
 UartDriverSysfs::UartDriverSysfs(CharDeviceFactory* factory)
-: char_device_factory_(factory) {}
+: char_device_factory_(factory){}
 
 UartDriverSysfs::~UartDriverSysfs() {}
 
-bool UartDriverSysfs::Init(const std::string& name) {
+bool UartDriverSysfs::Init(const std::string& name, bool canonical) {
     path_ = name;
+    int fd = -1;
 
     // Get a char device. If char_device_factory_ is set
     // then this is a unittest and the char device is provided
@@ -42,7 +43,12 @@ bool UartDriverSysfs::Init(const std::string& name) {
 
     // Open as non-blocking as we don't want peripheral_manager to block on a
     // single client read.
-    int fd = char_interface_->Open(path_.c_str(), O_RDWR | O_NONBLOCK);
+    if(canonical) {
+        fd = char_interface_->Open(path_.c_str(), O_RDWR );
+    }
+    else {
+        fd = char_interface_->Open(path_.c_str(), O_RDWR | O_NONBLOCK);
+    }
     if (fd < 0) {
         AppLogError() << "Failed to open " << path_;
         return false;
@@ -55,7 +61,18 @@ bool UartDriverSysfs::Init(const std::string& name) {
         close(fd);
         return false;
     }
-    cfmakeraw(&config);
+    if(canonical) {
+        config.c_cflag = CS8 | CLOCAL | CREAD;
+        config.c_lflag |= ICANON;
+        config.c_iflag = IGNPAR;
+        config.c_oflag = 0;
+        config.c_lflag |= ICANON;
+        config.c_cc[VMIN] = 0;
+        config.c_cc[VTIME] = 0;
+    }
+    else {
+        cfmakeraw(&config);
+    }
 
     if (char_interface_->Ioctl(fd, TCSETSF, &config)) {
         AppLogError() << "Failed to configure the UART device as Raw.";

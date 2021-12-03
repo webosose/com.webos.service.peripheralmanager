@@ -81,7 +81,7 @@ public:
 
     bool RegisterDriver(std::unique_ptr<UartDriverInfoBase> driver_info);
 
-    std::unique_ptr<UartDevice> OpenUartDevice(const std::string& name);
+    std::unique_ptr<UartDevice> OpenUartDevice(const std::string& name, bool canonical = false);
 
 private:
     UartManager();

@@ -27,7 +27,7 @@ class UartDriverInterface {
 public:
     virtual ~UartDriverInterface() {}
 
-    virtual bool Init(const std::string& name) = 0;
+    virtual bool Init(const std::string& name, bool canonical = false) = 0;
 
     virtual int SetBaudrate(uint32_t baudrate) = 0;
     virtual uint32_t getBaudrate(uint32_t* baudrate) = 0;
