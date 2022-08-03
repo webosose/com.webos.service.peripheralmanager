@@ -39,6 +39,7 @@
                 "com.webos.service.peripheralmanager/i2c/write",
                 "com.webos.service.peripheralmanager/i2c/read",
                 "com.webos.service.peripheralmanager/i2c/writeRegByte",
+                "com.webos.service.peripheralmanager/i2c/getPollingFd",
                 "com.webos.service.peripheralmanager/i2c/readRegByte",
                 "com.webos.service.peripheralmanager/i2c/writeRegWord",
                 "com.webos.service.peripheralmanager/i2c/readRegWord",
