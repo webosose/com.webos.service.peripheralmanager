@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2021-2022 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ bool PeripheralManagerService::ListGpio(LSMessage &ls_message) {
             std::vector<DevicesPinInfo> gpios;
             peripheral_manager_client->ListGpio(gpios);
             pbnjson::JValue gpioList = pbnjson::JArray();
-            for (auto gpio : gpios) {
+            for (const auto& gpio : gpios) {
                 pbnjson::JValue gpioJson  = pbnjson::JObject{{"pin", gpio.name},{"status", gpio.status}};
                 gpioList << gpioJson;
             }
@@ -533,7 +533,7 @@ bool PeripheralManagerService::ListUartDevices(LSMessage &ls_message) {
             try {
                 peripheral_manager_client->ListUartDevices(devices);
                 pbnjson::JValue device_list = pbnjson::JArray();
-                for (auto device : devices) {
+                for (const auto& device : devices) {
                     pbnjson::JValue uartJson  = pbnjson::JObject{{"interfaceId", device.name},{"status", device.status}};
                     device_list << uartJson;
                 }
