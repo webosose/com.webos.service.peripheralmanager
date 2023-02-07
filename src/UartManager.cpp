@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2021-2023 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -76,7 +76,6 @@ std::vector<std::string> UartManager::GetDevicesList() {
     std::vector<std::string> list;
     FILE *fp;
     char result[1024];
-    char *str = NULL;
 
     std::string command = "ls /dev/ttyACM* /dev/ttyUSB*";
     fp = popen(command.c_str(), "r");
@@ -88,21 +87,27 @@ std::vector<std::string> UartManager::GetDevicesList() {
 
     memset(result, 0, sizeof(result));
 
-    while (fgets(result, sizeof(result), fp) != NULL)
-    {
-        std::regex newlines_re("\n+");
-        auto result1 = std::regex_replace(result, newlines_re, "");
-
-        str = strstr(const_cast<char*>(result1.c_str()), "ttyACM");
-        if(str != NULL) {
-            RegisterUartDevice(str, result1.c_str());
-            SetPinMux(str,str);
+    while (fgets(result, sizeof(result), fp) != NULL) {
+        std::string regex_result;
+        try {
+            std::regex newlines_re("\n+");
+            regex_result = std::regex_replace(result, newlines_re, "");
+        } catch (const std::regex_error &e) {
+            AppLogError() << "regex_error caught:" << e.what();
+            pclose(fp);
+            return list;
         }
 
-        str = strstr(const_cast<char*>(result1.c_str()), "ttyUSB");
-        if(str != NULL) {
-            RegisterUartDevice(str, result1.c_str());
-            SetPinMux(str,str);
+        auto device = strstr(const_cast<char*>(regex_result.c_str()), "ttyACM");
+        if (device != NULL) {
+            RegisterUartDevice(device, regex_result.c_str());
+            SetPinMux(device, device);
+        }
+
+        device = strstr(const_cast<char*>(regex_result.c_str()), "ttyUSB");
+        if (device != NULL) {
+            RegisterUartDevice(device, regex_result.c_str());
+            SetPinMux(device, device);
         }
 
         memset(result, 0, sizeof(result));
