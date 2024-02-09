@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2021-2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -186,8 +186,7 @@ bool GpioDriverSysfs::ReadFromFileDirection(const std::string& file,
     close(fd);
     if (bytes < 0)
         return false;
-    int size = strlen(tmp_buf);
-    value->assign(tmp_buf, size-1);
+    value->assign(tmp_buf, bytes);
     return true;
 }
 
