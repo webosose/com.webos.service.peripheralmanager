@@ -83,9 +83,6 @@ int register_devices(const peripheral_io_module_t* dev,
             callbacks->register_gpio_sysfs(gpio24,24);
             callbacks->register_gpio_sysfs(gpio25,25);
         }
-        if(callbacks->register_uart_bus) {
-            callbacks->register_uart_bus(UART1, "/dev/ttyAMA0");
-        }
         if(callbacks->register_i2c_dev_bus) {
             callbacks->register_i2c_dev_bus(I2C1, 1);
             callbacks->register_i2c_dev_bus(I2C4, 4);
