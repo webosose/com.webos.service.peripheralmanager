@@ -72,7 +72,7 @@ bool GpioDriverSysfs::Init(uint32_t index) {
 
     int fd = open(path.c_str(), O_RDONLY);
     if (fd < 0) {
-        AppLogError()  << "Failed to open " << path;
+        AppLogError()  << "Failed to open " << std::move(path);
         return false;
     }
 
@@ -125,7 +125,7 @@ bool GpioDriverSysfs::getDirection(std::string& direction) {
     if (read_direction.empty())
         return false;
 
-    direction = read_direction;
+    direction = std::move(read_direction);
 
     return true;
 }

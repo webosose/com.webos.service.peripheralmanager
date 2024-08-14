@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ bool I2cManager::GetI2cDevBuses(pbnjson::JValue& list, bool verbose) {
         }
     }
 
-    list = i2cInterfaceList;
+    list = std::move(i2cInterfaceList);
     return true;
 }
 
