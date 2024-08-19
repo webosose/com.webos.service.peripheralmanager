@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ Status PeripheralManagerClient::ListGpio(std::vector<DevicesPinInfo>& gpioStat) 
     std::vector<std::string> gpios;
     gpios = GpioManager::GetGpioManager()->GetGpioPins();
     DevicesPinInfo gpioPinInfo;
-    for(auto name:gpios)
+    for(auto& name:gpios)
     {
         if(gpios_.count(name))
         {
@@ -48,7 +48,7 @@ Status PeripheralManagerClient::ListGpio(std::vector<DevicesPinInfo>& gpioStat) 
         {
             gpioPinInfo.status = "available";
         }
-        gpioPinInfo.name = name;
+        gpioPinInfo.name = std::move(name);
         gpioStat.push_back(gpioPinInfo);
     }
 }
@@ -500,14 +500,14 @@ Status PeripheralManagerClient::ListUartDevices(
     std::vector<std::string> devices;
     devices = UartManager::GetManager()->GetDevicesList();
     DevicesPinInfo uartPinInfo;
-    for(auto name:devices)
+    for(auto& name:devices)
     {
         if(uart_devices_.count(name))
             uartPinInfo.status = "used";
         else
             uartPinInfo.status = "available";
 
-        uartPinInfo.name = name;
+        uartPinInfo.name = std::move(name);
         uartStat.push_back(uartPinInfo);
         AppLogError() << " GPIO Pins Used" << uartPinInfo.name << ":" << uartPinInfo.status;
     }

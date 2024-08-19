@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -72,14 +72,14 @@ static int RegisterPinGroup(const char* name, char** pins, size_t nr_pins) {
     std::set<std::string> pins_set;
     for (size_t i = 0; i < nr_pins; i++)
         pins_set.emplace(pins[i]);
-    return PinMuxManager::GetPinMuxManager()->RegisterPinGroup(name, pins_set);
+    return PinMuxManager::GetPinMuxManager()->RegisterPinGroup(name, std::move(pins_set));
 }
 
 static int RegisterSource(const char* name, char** groups, size_t nr_groups) {
     std::set<std::string> groups_set;
     for (size_t i = 0; i < nr_groups; i++)
         groups_set.emplace(groups[i]);
-    return PinMuxManager::GetPinMuxManager()->RegisterSource(name, groups_set);
+    return PinMuxManager::GetPinMuxManager()->RegisterSource(name, std::move(groups_set));
 }
 
 static int RegisterSimpleSource(const char* name,
@@ -89,7 +89,7 @@ static int RegisterSimpleSource(const char* name,
     for (size_t i = 0; i < nr_pins; i++)
         pins_set.emplace(pins[i]);
     return PinMuxManager::GetPinMuxManager()->RegisterSimpleSource(name,
-            pins_set);
+            std::move(pins_set));
 }
 PeripheralManager::PeripheralManager() {}
 

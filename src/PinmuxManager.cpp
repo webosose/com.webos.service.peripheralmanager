@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2024 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ bool PinMuxManager::RegisterPinGroup(std::string name,
             return false;
         }
     }
-    groups_[name] = pins;
+    groups_[name] = std::move(pins);
     return true;
 }
 
@@ -67,13 +67,13 @@ bool PinMuxManager::RegisterSource(std::string name,
             return false;
         }
     }
-    sources_[name] = groups;
+    sources_[name] = std::move(groups);
     return true;
 }
 
 bool PinMuxManager::RegisterSimpleSource(std::string name,
         std::set<std::string> pins) {
-    if (!RegisterPinGroup(name, pins)) {
+    if (!RegisterPinGroup(name, std::move(pins))) {
         return false;
     }
     if (!RegisterSource(name, {name})) {
