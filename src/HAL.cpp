@@ -1,4 +1,4 @@
-// Copyright (c) 2021 LG Electronics, Inc.
+// Copyright (c) 2021-2025 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,12 @@
 #include "UartManager.h"
 #include "peripheral_io.h"
 #include "Logger.h"
+
+#define GPIO_END 25
+#define GPIO_START 4
+#define GPIO_BASE 512
+#define GPIO_SYSFS_START GPIO_BASE  // 512
+#define GPIO_SYSFS_END 569
 
 int register_devices(const peripheral_io_module_t* dev,
         const peripheral_registration_cb_t* callbacks) {
@@ -65,23 +71,20 @@ int register_devices(const peripheral_io_module_t* dev,
     const char* i2c4 [] = {gpio6, gpio7};
     const char* spi00 [] = {gpio7, gpio8, gpio9, gpio10, gpio11};
 
-    if (callbacks) {
-        if(callbacks->register_gpio_sysfs) {
-            callbacks->register_gpio_sysfs(gpio4,4);
-            callbacks->register_gpio_sysfs(gpio5,5);
-            callbacks->register_gpio_sysfs(gpio6,6);
-            callbacks->register_gpio_sysfs(gpio12,12);
-            callbacks->register_gpio_sysfs(gpio13,13);
-            callbacks->register_gpio_sysfs(gpio16,16);
-            callbacks->register_gpio_sysfs(gpio17,17);
-            callbacks->register_gpio_sysfs(gpio18,18);
-            callbacks->register_gpio_sysfs(gpio19,19);
-            callbacks->register_gpio_sysfs(gpio20,20);
-            callbacks->register_gpio_sysfs(gpio21,21);
-            callbacks->register_gpio_sysfs(gpio22,22);
-            callbacks->register_gpio_sysfs(gpio23,23);
-            callbacks->register_gpio_sysfs(gpio24,24);
-            callbacks->register_gpio_sysfs(gpio25,25);
+    if (callbacks)
+    {
+        if (callbacks->register_gpio_sysfs) {
+            // Skip GPIOs listed in skipped_gpio_set
+            std::unordered_set<int> skipped_gpio_set = {7, 8, 9, 10, 11, 14, 15};
+            for (int i = GPIO_START; i <= GPIO_END; ++i) {
+                if (skipped_gpio_set.find(i) != skipped_gpio_set.end()) {
+                    continue;
+                }
+                int sysfs_number = GPIO_BASE + i;
+                if (sysfs_number >= GPIO_SYSFS_START && sysfs_number <= GPIO_SYSFS_END) {
+                    callbacks->register_gpio_sysfs(("gpio" + std::to_string(i)).c_str(), sysfs_number);
+                }
+            }
         }
         if(callbacks->register_i2c_dev_bus) {
             callbacks->register_i2c_dev_bus(I2C1, 1);
